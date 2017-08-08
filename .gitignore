@@ -49,3 +49,5 @@ fabric.properties
 out/
 spark-warehouse/
 target/
+
+Spark-Project.iml
