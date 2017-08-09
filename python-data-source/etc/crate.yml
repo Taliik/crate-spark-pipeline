@@ -1,0 +1,11 @@
+path:
+    logs:  /Users/administrator/Desktop/dev/dwd_weather_data/var/log/crate
+    data:  /Users/administrator/Desktop/dev/dwd_weather_data/var/crate
+discovery:
+    type: zen
+    zen:
+        ping:
+            multicast:
+                enabled:  true
+cluster:
+    name: weather-dev

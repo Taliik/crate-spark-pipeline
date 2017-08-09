@@ -1,0 +1,11 @@
+============
+Legal Notice
+============
+
+The data in this repository is based on data by the DWD (Deutscher Wetterdienst).
+It has been transformed in order to be importable into the crate database
+while trying to stick to the actual data values as close as possible.
+
+The data has been accessed using the FTP server of the DWD CDC (Climate Data Center) www.dwd.de/cdc.
+
+Matthias Wahl - matthiaswahl@m7w3.de

@@ -1,0 +1,11 @@
+path:
+    logs:  ${crate:log_dir}
+    data:  ${crate:data_dir}
+discovery:
+    type: zen
+    zen:
+        ping:
+            multicast:
+                enabled:  ${crate:multicast}
+cluster:
+    name: ${crate:cluster_name}
