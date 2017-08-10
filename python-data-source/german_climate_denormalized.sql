@@ -1,6 +1,6 @@
 CREATE TABLE interns.raw_weather (
-  date timestamp,
-  station_id string,
+  date timestamp primary key,
+  station_id string primary key,
   station_name string,
   position geo_point, -- position of the weather station
   station_height int, -- height of the weather station
@@ -35,9 +35,6 @@ CREATE TABLE interns.raw_weather (
   ground_temp_50cm float, -- soil temperature in °C at 50cm depth
   ground_temp_100cm float, -- soil temperature in °C at 100cm depth
   sunshine_duration double, -- sum of sunshine duration in that hour in minutes
-  diffuse_sky_radiation double, -- sum of diffuse short-wave sky-radiation in J/cm² for that hour
-  global_radiation double, -- sum of global short-wave radiation in J/cm² for that hour
-  sun_zenith float, -- solar zenith angle (https://en.wikipedia.org/wiki/Solar_zenith_angle) in degree
   wind_speed double, -- wind speed in m/sec
   wind_direction int -- wind direction given in 36-part land-spout
-) clustered by (station_id) into 16 shards with (number_of_replicas=1, refresh_interval=0);
+) clustered by (station_id) into 16 shards with (number_of_replicas=1, refresh_interval=1000);

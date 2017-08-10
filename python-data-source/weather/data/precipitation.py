@@ -32,9 +32,9 @@ class PrecipitationParser(DWDDataSourceParser):
         return 7
 
     def extract_data(self, row):
-        fallen = bool(int(row[5]))
-        height = self.get_float(row[4])
-        form = self.get_int(row[6])
+        fallen = bool(int(row[4]))
+        height = self.get_float(row[3])
+        form = self.get_int(row[5])
         return {
             "rainfall_fallen": fallen,
             "rainfall_height": height,

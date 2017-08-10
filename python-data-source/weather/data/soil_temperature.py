@@ -34,10 +34,10 @@ class SoilTemperatureParser(DWDDataSourceParser):
     def extract_data(self, row):
         return {
             # temperatures in °C
-            "ground_temp_2cm": self.get_float(row[4]),
-            "ground_temp_5cm": self.get_float(row[5]),
-            "ground_temp_10cm": self.get_float(row[6]),
-            "ground_temp_20cm": self.get_float(row[7]),
-            "ground_temp_50cm": self.get_float(row[8]),
-            "ground_temp_100cm": self.get_float(row[9])
+            "ground_temp_2cm": self.get_float(row[3]),
+            "ground_temp_5cm": self.get_float(row[4]),
+            "ground_temp_10cm": self.get_float(row[5]),
+            "ground_temp_20cm": self.get_float(row[6]),
+            "ground_temp_50cm": self.get_float(row[7]),
+            "ground_temp_100cm": self.get_float(row[8])
         }

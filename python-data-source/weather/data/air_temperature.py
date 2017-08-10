@@ -31,8 +31,8 @@ class AirTemperatureParser(DWDDataSourceParser):
 
     def extract_data(self, row):
         return {
-            "temp": self.get_float(row[4]),  # in °C
-            "humility": self.get_float(row[5])  # float in percent
+            "temp": self.get_float(row[3]),  # in °C
+            "humility": self.get_float(row[4])  # float in percent
         }
 
     def expected_columns(self):

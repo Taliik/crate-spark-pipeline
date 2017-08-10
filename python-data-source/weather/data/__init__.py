@@ -19,6 +19,9 @@
 # with Crate these terms will supersede the license and you may use the
 # software solely pursuant to the terms of the relevant commercial agreement.
 
+import re
+import os
+
 from .air_temperature import AirTemperatureParser
 from .cloudiness import CloudinessParser
 from .sun import SunshineParser
@@ -28,8 +31,6 @@ from .soil_temperature import SoilTemperatureParser
 from .pressure import PressureParser
 from .solar import SolarRadiationParser
 from .station_metadata import StationsMetadata
-import re
-import os
 
 DATA_FILE_PATTERN = re.compile(r'^stundenwerte_[A-Z0-9]+_(.{5}).*?\.zip$')
 

@@ -32,6 +32,6 @@ class PressureParser(DWDDataSourceParser):
 
     def extract_data(self, row):
         return {
-            "air_pressure": self.get_float(row[4]),  # air pressure
-            "air_pressure_station_height": self.get_float(row[5])  # air pressure at station height
+            "air_pressure": self.get_float(row[3]),  # air pressure
+            "air_pressure_station_height": self.get_float(row[4])  # air pressure at station height
         }

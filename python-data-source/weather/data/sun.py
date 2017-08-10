@@ -34,5 +34,5 @@ class SunshineParser(DWDDataSourceParser):
 
     def extract_data(self, row):
         return {
-            "sunshine_duration": self.get_float(row[4]),  # Stundensumme der Sonnenscheindauer in minutes
+            "sunshine_duration": self.get_float(row[3]),  # Stundensumme der Sonnenscheindauer in minutes
         }

@@ -70,7 +70,6 @@ def main():
     parser.add_argument("--out-dir", dest="out_dir",
                         type=str, help="the output directory",
                         default=DEFAULT_OUT_DIR)
-    parser.add_argument("--station", dest="stations", type=str, nargs='*', help="the station to parse")
     parser.add_argument('-d', '--debug', dest="debug", action="store_true")
     parser.add_argument('--normalized', dest="normalized", action="store_true", help="if true, create data for normalized schema")
     args = parser.parse_args(sys.argv[1:])
@@ -84,11 +83,7 @@ def main():
             stream=sys.stdout,
             level=level)
     try:
-        stations = args.stations
-        if not stations:
-            stations = get_stations(args.download_dir)
-
-        parse(args.download_dir, stations, args.out_dir, args.normalized)
+        parse(args.download_dir, get_stations(args.download_dir), args.out_dir, args.normalized)
         sys.exit(0)
     except Exception:
         traceback.print_exc()

@@ -73,7 +73,7 @@ class DWDDataSourceParser(object):
 
                     metadata = {
                         "station_id": id,
-                        "station_height": self.get_int(row["height"].strip()),
+                        "station_height": self.get_float(row["height"].strip()),
                         "position_lon": position[0],
                         "position_lat": position[1],
                         "station_name": name
