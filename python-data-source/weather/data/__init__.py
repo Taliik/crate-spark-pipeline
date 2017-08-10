@@ -29,7 +29,6 @@ from .precipitation import PrecipitationParser
 from .wind import WindParser
 from .soil_temperature import SoilTemperatureParser
 from .pressure import PressureParser
-from .solar import SolarRadiationParser
 from .station_metadata import StationsMetadata
 
 DATA_FILE_PATTERN = re.compile(r'^stundenwerte_[A-Z0-9]+_(.{5}).*?\.zip$')
@@ -46,7 +45,6 @@ class Parsers(object):
         PrecipitationParser,
         PressureParser,
         SoilTemperatureParser,
-        SolarRadiationParser,
         SunshineParser,
         WindParser,
     ]
