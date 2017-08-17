@@ -1,4 +1,4 @@
-CREATE TABLE interns.raw_weather (
+CREATE TABLE weather.germany_raw (
   date timestamp primary key,
   station_id string primary key,
   station_name string,
