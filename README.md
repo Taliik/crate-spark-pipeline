@@ -11,10 +11,10 @@ The model itself learns from a custom dataset of twitter tweets and a correspond
 
 ## Requirements
 
- * CrateDB cluster (either local e.g. via docker-compose or remote)
- * Apache Spark cluster (either local or remote)
- * A dataset
- * An idea what you want to accomplish with that dataset
+* CrateDB cluster (either local e.g. via `docker-compose` or remote)
+* Apache Spark cluster (either local or remote)
+* A dataset
+* An idea what you want to accomplish with that dataset
 
 ## Raw Dataset
 
@@ -42,15 +42,17 @@ All defined transformations are applied to each data record of the dataset in th
 When having a look at our twitter data, we recognize that there are some segments of `text` which don't provide
 information for language detection.
 This includes:
-    * the `RT @username:` of retweets -> drop it
-    * other user mentionings e.g. `@username -> drop it
-    * hashtags -> drop it
-    * URIs -> drop it
+
+* the '`RT @username:`' of retweets -> drop it
+* other user mentionings e.g. '`@username`' -> drop it
+* hashtags -> drop it
+* URIs -> drop it
+
 The remaining text is the text used as training data.
 
 ### Usage
 
-# TODO: add code of transformations
+## add code of transformations
 
 [import_tweets]: import_tweets.png
 [definition_transformation]: https://spark.apache.org/docs/latest/ml-pipeline.html#main-concepts-in-pipelines
