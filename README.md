@@ -45,14 +45,18 @@ This includes:
 
 * the '`RT @username:`' of retweets -> drop it
 * other user mentionings e.g. '`@username`' -> drop it
-* hashtags -> drop it
+* Hashtags -> drop it
+* E-mail-addresses -> drop it
 * URIs -> drop it
+* Emojis -> drop it
+
+To provide reliable texts to the language detection algorithm, it is also advised to set a minimum text length.
 
 The remaining text is the text used as training data.
 
-### Usage
+## Machine Learning
 
-## add code of transformations
+Now that the tweets are clean labeled texts, machine learning can be applied on this dataset.
 
 [import_tweets]: import_tweets.png
 [definition_transformation]: https://spark.apache.org/docs/latest/ml-pipeline.html#main-concepts-in-pipelines
