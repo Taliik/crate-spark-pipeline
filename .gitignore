@@ -4,11 +4,3 @@
 /*.iml
 /target
 /spark-warehouse
-/python-data-source/bin
-/python-data-source/develop-eggs
-/python-data-source/eggs
-/python-data-source/parts
-/python-data-source/weather.egg-info
-/python-data-source/.installed.cfg
-*.pyc
-__pycache__

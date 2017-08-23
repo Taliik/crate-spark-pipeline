@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <groupId>io.crate.interns.spark</groupId>
-    <artifactId>spark-project</artifactId>
+    <artifactId>spark-jobs</artifactId>
     <build>
         <plugins>
             <plugin>
@@ -95,6 +95,12 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.6.5</version>
+        </dependency>
+        <!-- Language Detection Library -->
+        <dependency>
+            <groupId>com.youcruit.com.cybozu.labs</groupId>
+            <artifactId>langdetect</artifactId>
+            <version>1.1.2-20151117</version>
         </dependency>
     </dependencies>
 </project>
