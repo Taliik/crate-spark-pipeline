@@ -1,9 +1,9 @@
 package crate.app;
 
-import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.google.common.collect.ImmutableMap;
+import crate.transformation.LanguageTransformator;
 import crate.transformation.RegexTransformator;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -14,25 +14,21 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.length;
+
 public class App {
 
     public static void main(String[] args) throws IOException, LangDetectException {
-
-        DetectorFactory.loadProfile("profiles");
-
-        Detector detector = DetectorFactory.create();
-        String text = "hello this is a test just to see what language will be picked";
-        detector.append(text);
-        System.out.println("language of: " + text);
-        System.out.println(detector.detect());
-
-
         // read properties from resources
         final Properties properties = new Properties();
         properties.load(App.class.getResourceAsStream("/config.properties"));
 
         System.out.println("used properties:\n");
         System.out.println(properties);
+
+        //initialize language detector factory
+        DetectorFactory.loadProfile(properties.getProperty("language.profiles.path"));
 
         // initialize spark session
         SparkSession session = SparkSession
@@ -63,34 +59,54 @@ public class App {
 
         final String transformationPattern =
                 "(&\\w+;)"
-                //retweets
-                + "|(^RT @\\w+: )"
-                //emails
-                + "|(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])" //e-mails
-                //user-tags
-                + "|(@\\w+)"
-                //links
-                + "|((https?|ftp):\\/\\/[^\\s/$.?#].[^\\s]*)"
-                //hash-tags
-                + "|(#\\w+)"
-                //emojis
-                + "|([\\u203C-\\uDFFF])";
+                        //retweets
+                        + "|(^RT @\\w+: )"
+                        //emails
+                        + "|(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])" //e-mails
+                        //user-tags
+                        + "|(@\\w+)"
+                        //links
+                        + "|((https?|ftp):\\/\\/[^\\s/$.?#].[^\\s]*)"
+                        //hash-tags
+                        + "|(#\\w+)"
+                        //emojis
+                        + "|([\\u203C-\\uDFFF])";
+
         // apply transformations
         RegexTransformator textCleaner = new RegexTransformator(transformationPattern, "")
                 .setInputCol("text")
                 .setOutputCol("cleanText");
 
+        LanguageTransformator languageGuesser = new LanguageTransformator()
+                .setInputCol("cleanText")
+                .setOutputCol("label");
+
+        // clean the dataset using the regular expression above
         Dataset<Row> cleanData = textCleaner.transform(twitterData);
-        cleanData.select("cleanText").collectAsList().forEach(row -> System.out.println(row));
+
+        // remove tweets which are shorter than 50 characters -> language guess is quite bad there
+        Dataset<Row> preFiltered = cleanData.filter(length(col("cleanText")).geq(50));
+
+        // label remaining tweets
+        Dataset<Row> labeledData = languageGuesser.transform(preFiltered);
+
+        // drop the tweets which could not be guessed (should be near 0)
+        Dataset<Row> result = labeledData
+                .filter(col("label").isNotNull())
+                .filter(col("label").notEqual("unknown"));
 
 
-        /*
-        apply machine learning
+        // for test: display labeled tweets
+        result
+                .select("label", "cleanText")
+                .collectAsList()
+                .forEach(row -> System.out.println(row));
 
-        feed enriched data back into crate
+        // TODO: apply machine learning, feed enriched data back into crate, persist the model
+        // apply machine learning
+        // feed enriched data back into crate
+        // persist the model somehow - either internal or external
 
-        persist the model somehow - either internal or external
-        */
         session.stop();
     }
 }
