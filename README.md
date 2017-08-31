@@ -36,8 +36,8 @@ For this use case, the main goal is to identify the language of a given text usi
 ## Transformations
 
 A [transformation][definition_transformation] basically is the process of adding, editing, removing, combining parts of
-one or more column(s) of a dataset (so called feature) and storing the new value in a new column.
-All defined transformations are applied to each data record of the dataset in the order they where defined.
+one or more column(s) (also called feature(s)) of a dataset and storing the new value in a new feature.
+All defined transformations are applied to each data record of the dataset in the order they were defined.
 
 When having a look at our twitter data, we recognize that there are some segments of `text` which don't provide
 information for language detection.
@@ -51,8 +51,14 @@ This includes:
 * Emojis -> drop it
 
 To provide reliable texts to the language detection algorithm, it is also advised to set a minimum text length.
-
 The remaining text is the text used as training data.
+
+## Labeling
+
+For [supervised machine learning][definition_supervised_machine_learning] the algorithm needs to know the correct answer
+of a given input. To provide that in an easy way, a language detection library analyzes the dataset and adds a language
+classifier.
+
 
 ## Machine Learning
 
@@ -60,3 +66,10 @@ Now that the tweets are clean labeled texts, machine learning can be applied on 
 
 [import_tweets]: import_tweets.png
 [definition_transformation]: https://spark.apache.org/docs/latest/ml-pipeline.html#main-concepts-in-pipelines
+[definition_supervised_machine_learning]: https://en.wikipedia.org/wiki/Supervised_learning
+
+## Apps
+
+## Benchmarks
+
+select correct.c, whole.w, (correct.c::double/whole.w::double) from (select count(*) as c from predicted_tweets where label=prediction) as correct, (select count(*) as w from predicted_tweets) as whole
