@@ -12,12 +12,30 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static crate.meta.Metadata.*;
-import static crate.util.TwitterUtil.*;
+import static crate.meta.Metadata.LABEL_ORIGINAL;
+import static crate.meta.Metadata.PREDICTION;
+import static crate.meta.Metadata.TEXT_ORIGINAL;
+import static crate.util.TwitterUtil.crate;
+import static crate.util.TwitterUtil.prepareTweets;
+import static crate.util.TwitterUtil.spark;
 
 public class PredictCrateData {
 
     public static void main(String[] args) throws IOException, StreamingQueryException, LangDetectException {
+
+        // initialize spark session
+        SparkSession session = SparkSession
+                .builder()
+                .appName("Predict From Model")
+                .master(spark.getProperty("spark.master"))
+                .getOrCreate();
+
+        predictCrateData(session);
+
+        session.stop();
+    }
+
+    public static void predictCrateData(SparkSession session) throws LangDetectException {
 
         // read prediction model
         String modelFileName = spark.getProperty("spark.model");
@@ -26,13 +44,6 @@ public class PredictCrateData {
                     String.format("Could not find model at %s.", modelFileName)
             );
         }
-
-        // initialize spark session
-        SparkSession session = SparkSession
-                .builder()
-                .appName("Predict From Model")
-                .master(spark.getProperty("spark.master"))
-                .getOrCreate();
 
         // load model
         PipelineModel model = PipelineModel.load(modelFileName);
@@ -60,10 +71,8 @@ public class PredictCrateData {
                 .mode(SaveMode.Append)
                 .jdbc(
                         crate.getProperty("url"),
-                        "predicted_tweets",
+                        "tweets_prediction",
                         crate
                 );
-
-        session.stop();
     }
 }

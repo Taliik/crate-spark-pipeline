@@ -1,7 +1,6 @@
 package crate.app;
 
 import com.cybozu.labs.langdetect.LangDetectException;
-import crate.util.TwitterUtil;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -24,8 +23,7 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 
 import static crate.meta.Metadata.*;
-import static crate.util.TwitterUtil.crate;
-import static crate.util.TwitterUtil.spark;
+import static crate.util.TwitterUtil.*;
 
 public class LearnFromTwitter {
 
@@ -39,6 +37,13 @@ public class LearnFromTwitter {
                 .master(spark.getProperty("spark.master"))
                 .getOrCreate();
 
+
+        learnFromTwitter(session);
+
+        session.stop();
+    }
+
+    public static void learnFromTwitter(SparkSession session) throws LangDetectException, IOException {
         // fetch data
         Dataset<Row> original = session
                 .read()
@@ -52,7 +57,7 @@ public class LearnFromTwitter {
         // preparations
         // ************
 
-        Dataset<Row> rawLabeled = TwitterUtil.prepareTweets(original, 30, true);
+        Dataset<Row> rawLabeled = prepareTweets(original, 30, true);
 
         // label indexing
         StringIndexerModel labelIndexer = new StringIndexer()
@@ -149,6 +154,6 @@ public class LearnFromTwitter {
         }
         model.save(modelFileName);
 
-        session.stop();
     }
+
 }

@@ -6,7 +6,6 @@ import crate.transformation.RegexReplacer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import java.io.IOException;
 import java.util.Properties;
 
 import static com.cybozu.labs.langdetect.DetectorFactory.loadProfile;
@@ -23,9 +22,12 @@ public class TwitterUtil {
         spark = new Properties();
         crate = new Properties();
         try {
+            //initialize properties
             spark.load(TwitterUtil.class.getResourceAsStream("/spark.properties"));
             crate.load(TwitterUtil.class.getResourceAsStream("/crate.properties"));
-        } catch (IOException e) {
+            //initialize language detector factory
+            loadProfile(spark.getProperty("language.profiles.path"));
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -58,8 +60,6 @@ public class TwitterUtil {
         Dataset<Row> filtered = rawFiltered.filter(length(col(TEXT_FILTERED)).geq(tweetMinlength));
 
         if (label) {
-            //initialize language detector factory
-            loadProfile(spark.getProperty("language.profiles.path"));
             // label tweets
             LanguageGuesser languageGuesser = new LanguageGuesser()
                     .setInputCol(TEXT_FILTERED)
@@ -67,7 +67,6 @@ public class TwitterUtil {
             Dataset<Row> rawLabeled = languageGuesser.transform(filtered);
             return rawLabeled;
         }
-
 
         return filtered;
     }
