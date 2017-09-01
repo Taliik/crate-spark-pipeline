@@ -6,27 +6,30 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import scala.Function1;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
 import static com.cybozu.labs.langdetect.DetectorFactory.create;
-import static com.cybozu.labs.langdetect.DetectorFactory.loadProfile;
+import static com.cybozu.labs.langdetect.DetectorFactory.loadProfileFromClassPath;
 
 public class LanguageGuesser extends IdentifiableUnaryTransformer<String, String, LanguageGuesser> {
 
     private static boolean initializeDetectorFactory = true;
 
-    public LanguageGuesser(String uid) throws LangDetectException {
+    public LanguageGuesser(String uid) throws LangDetectException, IOException, URISyntaxException {
         getUid(uid);
         init();
     }
 
-    public LanguageGuesser() throws LangDetectException {
+    public LanguageGuesser() throws LangDetectException, IOException, URISyntaxException {
         getUid();
         init();
     }
 
-    private void init() throws LangDetectException {
+    private void init() throws LangDetectException, IOException, URISyntaxException {
         if (initializeDetectorFactory) {
             initializeDetectorFactory = false;
-            loadProfile(LanguageGuesser.class.getResource("/profiles").getFile());
+            loadProfileFromClassPath();
         }
     }
 

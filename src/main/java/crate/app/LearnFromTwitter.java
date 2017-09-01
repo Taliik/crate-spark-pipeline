@@ -18,6 +18,7 @@ import org.apache.spark.sql.SparkSession;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +33,7 @@ import static crate.util.TwitterUtil.prepareTweets;
 
 public class LearnFromTwitter {
 
-    public static void main(String[] args) throws IOException, LangDetectException {
+    public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
 
         OptionParser parser = new OptionParser();
         parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
@@ -52,7 +53,7 @@ public class LearnFromTwitter {
         session.stop();
     }
 
-    public static void learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException {
+    public static void learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
         // fetch data
         Dataset<Row> original = session
                 .read()

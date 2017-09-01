@@ -10,6 +10,7 @@ import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -20,7 +21,7 @@ import static crate.util.TwitterUtil.prepareTweets;
 
 public class PredictCrateData {
 
-    public static void main(String[] args) throws IOException, LangDetectException {
+    public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
 
         OptionParser parser = new OptionParser();
         parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
@@ -40,7 +41,7 @@ public class PredictCrateData {
         session.stop();
     }
 
-    public static void predictCrateData(SparkSession session, Properties properties) throws IOException, LangDetectException {
+    public static void predictCrateData(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
 
         // read prediction model
         if (Files.notExists(Paths.get(TWITTER_MODEL))) {

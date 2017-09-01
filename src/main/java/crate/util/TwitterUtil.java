@@ -6,13 +6,16 @@ import crate.transformation.RegexReplacer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+
 import static crate.meta.Metadata.*;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.length;
 
 public class TwitterUtil {
 
-    public static final Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinLength, boolean label) throws LangDetectException {
+    public static final Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinLength, boolean label) throws LangDetectException, IOException, URISyntaxException {
         final String transformationPattern = "(&\\w+;)"
                 //retweets
                 + "|(^RT @\\w+: )"

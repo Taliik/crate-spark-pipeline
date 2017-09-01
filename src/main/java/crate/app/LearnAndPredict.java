@@ -6,6 +6,7 @@ import joptsimple.OptionParser;
 import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -14,7 +15,7 @@ import static crate.app.PredictCrateData.predictCrateData;
 
 public class LearnAndPredict {
 
-    public static void main(String[] args) throws IOException, LangDetectException {
+    public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
 
         OptionParser parser = new OptionParser();
         parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
