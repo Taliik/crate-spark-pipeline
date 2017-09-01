@@ -13,37 +13,37 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static crate.meta.Metadata.*;
-import static crate.util.TwitterUtil.*;
+import static crate.util.TwitterUtil.prepareTweets;
+import static crate.util.TwitterUtil.properties;
 
 public class PredictCrateData {
 
     public static void main(String[] args) throws IOException, StreamingQueryException, LangDetectException {
 
         // read prediction model
-        String modelFileName = spark.getProperty("spark.model");
-        if (Files.notExists(Paths.get(modelFileName))) {
+        if (Files.notExists(Paths.get(TWITTER_MODEL))) {
             throw new IllegalArgumentException(
-                    String.format("Could not find model at %s.", modelFileName)
+                    String.format("Could not find %s.", TWITTER_MODEL)
             );
         }
 
         // initialize spark session
         SparkSession session = SparkSession
                 .builder()
+                .master("local[*]")
                 .appName("Predict From Model")
-                .master(spark.getProperty("spark.master"))
                 .getOrCreate();
 
         // load model
-        PipelineModel model = PipelineModel.load(modelFileName);
+        PipelineModel model = PipelineModel.load(TWITTER_MODEL);
 
         // fetch data
         Dataset<Row> original = session
                 .read()
                 .jdbc(
-                        crate.getProperty("url"),
+                        properties().getProperty("url"),
                         "(SELECT created_at, id, source, text from tweets) as tweets",
-                        crate
+                        properties()
                 );
 
         // ************
@@ -54,14 +54,16 @@ public class PredictCrateData {
         // predict crate data
         Dataset<Row> predicted = model.transform(prepared);
 
+
+
         // write data back to crate
         predicted.select("id", "created_at", TEXT_ORIGINAL, PREDICTION, LABEL_ORIGINAL)
                 .write()
                 .mode(SaveMode.Append)
                 .jdbc(
-                        crate.getProperty("url"),
+                        properties().getProperty("url"),
                         "predicted_tweets",
-                        crate
+                        properties()
                 );
 
         session.stop();
