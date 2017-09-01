@@ -11,4 +11,6 @@ public class Metadata {
     public final static String PREDICTION_INDEXED = "predictionIndex";
     public final static String PREDICTION = "prediction";
     public final static String PROBABILITY = "probability";
+
+    public final static String TWITTER_MODEL = "model/languagepredictor";
 }

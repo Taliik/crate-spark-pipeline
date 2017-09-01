@@ -12,12 +12,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static crate.meta.Metadata.LABEL_ORIGINAL;
-import static crate.meta.Metadata.PREDICTION;
-import static crate.meta.Metadata.TEXT_ORIGINAL;
-import static crate.util.TwitterUtil.crate;
+import static crate.meta.Metadata.*;
 import static crate.util.TwitterUtil.prepareTweets;
-import static crate.util.TwitterUtil.spark;
+import static crate.util.TwitterUtil.properties;
 
 public class PredictCrateData {
 
@@ -38,23 +35,22 @@ public class PredictCrateData {
     public static void predictCrateData(SparkSession session) throws LangDetectException {
 
         // read prediction model
-        String modelFileName = spark.getProperty("spark.model");
-        if (Files.notExists(Paths.get(modelFileName))) {
+        if (Files.notExists(Paths.get(TWITTER_MODEL))) {
             throw new IllegalArgumentException(
-                    String.format("Could not find model at %s.", modelFileName)
+                    String.format("Could not find %s.", TWITTER_MODEL)
             );
         }
 
         // load model
-        PipelineModel model = PipelineModel.load(modelFileName);
+        PipelineModel model = PipelineModel.load(TWITTER_MODEL);
 
         // fetch data
         Dataset<Row> original = session
                 .read()
                 .jdbc(
-                        crate.getProperty("url"),
+                        properties().getProperty("url"),
                         "(SELECT created_at, id, source, text from tweets) as tweets",
-                        crate
+                        properties()
                 );
 
         // ************
@@ -65,14 +61,17 @@ public class PredictCrateData {
         // predict crate data
         Dataset<Row> predicted = model.transform(prepared);
 
+
+
         // write data back to crate
         predicted.select("id", "created_at", TEXT_ORIGINAL, PREDICTION, LABEL_ORIGINAL)
                 .write()
                 .mode(SaveMode.Append)
                 .jdbc(
-                        crate.getProperty("url"),
-                        "tweets_prediction",
-                        crate
+                        properties().getProperty("url"),
+                        "predicted_tweets",
+                        properties()
+
                 );
     }
 }

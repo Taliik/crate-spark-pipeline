@@ -23,18 +23,18 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 
 import static crate.meta.Metadata.*;
+
 import static crate.util.TwitterUtil.*;
+
 
 public class LearnFromTwitter {
 
     public static void main(String[] args) throws IOException, LangDetectException {
 
-
         // initialize spark session
         SparkSession session = SparkSession
                 .builder()
                 .appName("Learn From Twitter")
-                .master(spark.getProperty("spark.master"))
                 .getOrCreate();
 
 
@@ -48,9 +48,9 @@ public class LearnFromTwitter {
         Dataset<Row> original = session
                 .read()
                 .jdbc(
-                        crate.getProperty("url"),
+                        properties().getProperty("url"),
                         "(SELECT text from tweets) as tweets",
-                        crate
+                        properties()
                 );
 
         // ************
@@ -144,15 +144,14 @@ public class LearnFromTwitter {
         PipelineModel model = (PipelineModel) validator.fit(prepared).bestModel();
 
         // Save the model and delete old one if existing
-        String modelFileName = spark.getProperty("spark.model");
-        if (Files.isDirectory(Paths.get(modelFileName))) {
-            Path rootPath = Paths.get(modelFileName);
+        if (Files.isDirectory(Paths.get(TWITTER_MODEL))) {
+            Path rootPath = Paths.get(TWITTER_MODEL);
             Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .forEach(File::delete);
         }
-        model.save(modelFileName);
+        model.save(TWITTER_MODEL);
 
     }
 

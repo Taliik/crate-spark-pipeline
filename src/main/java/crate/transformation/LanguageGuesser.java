@@ -7,15 +7,27 @@ import org.apache.spark.sql.types.DataTypes;
 import scala.Function1;
 
 import static com.cybozu.labs.langdetect.DetectorFactory.create;
+import static com.cybozu.labs.langdetect.DetectorFactory.loadProfile;
 
 public class LanguageGuesser extends IdentifiableUnaryTransformer<String, String, LanguageGuesser> {
 
-    public LanguageGuesser(String uid) {
+    private static boolean initializeDetectorFactory = true;
+
+    public LanguageGuesser(String uid) throws LangDetectException {
         getUid(uid);
+        init();
     }
 
-    public LanguageGuesser() {
+    public LanguageGuesser() throws LangDetectException {
         getUid();
+        init();
+    }
+
+    private void init() throws LangDetectException {
+        if (initializeDetectorFactory) {
+            initializeDetectorFactory = false;
+            loadProfile(LanguageGuesser.class.getResource("/profiles").getFile());
+        }
     }
 
     @Override

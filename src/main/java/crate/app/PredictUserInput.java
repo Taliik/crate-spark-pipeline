@@ -16,42 +16,35 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
-import static crate.meta.Metadata.PREDICTION;
-import static crate.meta.Metadata.TEXT_FILTERED;
+import static crate.meta.Metadata.*;
 
 public class PredictUserInput {
 
     public static void main(String[] args) throws IOException {
-        // read properties from resources
-        final Properties properties = new Properties();
-        properties.load(PredictUserInput.class.getResourceAsStream("/spark.properties"));
 
         // read prediction model
-        String modelFileName = properties.getProperty("spark.model");
-        if (Files.notExists(Paths.get(modelFileName))) {
+        if (Files.notExists(Paths.get(TWITTER_MODEL))) {
             throw new IllegalArgumentException(
-                    String.format("Could not find model at %s. Please make sure a model is existing.", modelFileName)
+                    String.format("Could not find model at %s.", TWITTER_MODEL)
             );
         }
 
         // initialize spark session
         SparkSession session = SparkSession
                 .builder()
-                .appName("Predict From Model")
-                .master(properties.getProperty("spark.master"))
+                .appName("Predict User Input From Model")
                 .getOrCreate();
 
         // load model
-        PipelineModel model = PipelineModel.load(modelFileName);
+        PipelineModel model = PipelineModel.load(TWITTER_MODEL);
 
         // predict user input data
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
         String line;
 
         while (!(line = input.readLine()).isEmpty()) {
-            // create some hardcoded data to predict
+            // create dataframe from input
             List<Row> data = Arrays.asList(
                     RowFactory.create(line)
             );
