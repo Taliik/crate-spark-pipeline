@@ -6,6 +6,7 @@ import crate.transformation.RegexReplacer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import static crate.meta.Metadata.*;
@@ -16,7 +17,7 @@ public class TwitterUtil {
 
     private static Properties properties;
 
-    public static final Properties properties() throws IOException {
+    public static final Properties properties() throws IOException, IOException {
         if(properties==null) {
             properties = new Properties();
             properties.load(TwitterUtil.class.getResourceAsStream("/crate.properties"));
