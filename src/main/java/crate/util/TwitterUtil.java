@@ -6,25 +6,11 @@ import crate.transformation.RegexReplacer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import static crate.meta.Metadata.*;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.length;
 
 public class TwitterUtil {
-
-    private static Properties properties;
-
-    public static final Properties properties() throws IOException, IOException {
-        if(properties==null) {
-            properties = new Properties();
-            properties.load(TwitterUtil.class.getResourceAsStream("/crate.properties"));
-
-        }
-        return properties;
-    }
 
     public static final Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinLength, boolean label) throws LangDetectException {
         final String transformationPattern = "(&\\w+;)"
