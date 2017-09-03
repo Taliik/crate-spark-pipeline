@@ -142,9 +142,9 @@ But since machine learning can only be applied on numeric values, Spark provides
 
 # Tuning
 
-## Apps
+# Apps
 
-## Evaluation
+# Evaluation
 
 select correct.c, whole.w, (correct.c::double/whole.w::double) from (select count(*) as c from predicted_tweets where label=prediction) as correct, (select count(*) as w from predicted_tweets) as whole
 
