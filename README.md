@@ -8,7 +8,6 @@ This project explains the necessary steps to apply machine learning algorithms o
 For storage and ingestion, CrateDB is the software to store and query an incredible amount of data in real time.
 For machine learning, Apache Spark is the quick and easy way to produce machine learning models.
 
-
 Since the theory may be complex at first sight, a simple use case helps to explain the theory behind.
 
 ## Requirements
@@ -132,10 +131,10 @@ Unfortunately, Spark is not capable of machine learning using texts. These texts
 
 [Labels][definition_labels] are the solution of a given problem.
 But since machine learning can only be applied on numeric values, Spark provides two good solutions to transform texts into indices and back.
+<<<<<<< HEAD
+=======
 
 #### String Indexer 
-
-# CONTINUE HERE
 
 #### Index To String
 
