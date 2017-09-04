@@ -7,30 +7,15 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.net.URISyntaxException;
 
-import static com.cybozu.labs.langdetect.DetectorFactory.loadProfile;
 import static crate.meta.Metadata.*;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.length;
 
 public class TwitterUtil {
 
-    public static final Properties spark;
-    public static final Properties crate;
-
-    static {
-        spark = new Properties();
-        crate = new Properties();
-        try {
-            spark.load(TwitterUtil.class.getResourceAsStream("/spark.properties"));
-            crate.load(TwitterUtil.class.getResourceAsStream("/crate.properties"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinlength, boolean label) throws LangDetectException {
+    public static final Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinLength, boolean label) throws LangDetectException, IOException, URISyntaxException {
         final String transformationPattern = "(&\\w+;)"
                 //retweets
                 + "|(^RT @\\w+: )"
@@ -53,21 +38,16 @@ public class TwitterUtil {
                 .setReplacement("");
         Dataset<Row> rawFiltered = regexReplacer.transform(original);
 
-        // remove tweets which are shorter than 50 characters and do not contain any valuable character
-        // -> language guess is quite bad there
-        Dataset<Row> filtered = rawFiltered.filter(length(col(TEXT_FILTERED)).geq(tweetMinlength));
+        // remove tweets which are shorter than minimum length
+        Dataset<Row> filtered = rawFiltered.filter(length(col(TEXT_FILTERED)).geq(tweetMinLength));
 
         if (label) {
-            //initialize language detector factory
-            loadProfile(spark.getProperty("language.profiles.path"));
             // label tweets
             LanguageGuesser languageGuesser = new LanguageGuesser()
                     .setInputCol(TEXT_FILTERED)
                     .setOutputCol(LABEL_ORIGINAL);
-            Dataset<Row> rawLabeled = languageGuesser.transform(filtered);
-            return rawLabeled;
+            return languageGuesser.transform(filtered);
         }
-
 
         return filtered;
     }

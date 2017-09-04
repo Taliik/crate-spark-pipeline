@@ -72,4 +72,12 @@ Now that the tweets are clean labeled texts, machine learning can be applied on 
 
 ## Benchmarks
 
-select correct.c, whole.w, (correct.c::double/whole.w::double) from (select count(*) as c from predicted_tweets where label=prediction) as correct, (select count(*) as w from predicted_tweets) as whole
+```
+select
+    correct.c as correct,
+    predicted.p as predicted,
+    (correct.c::double/predicted.p::double*100.0) as percent_successrate
+from
+    (select count(*) as c from predicted_tweets where label=prediction) as correct,
+    (select count(*) as p from predicted_tweets) as predicted
+```

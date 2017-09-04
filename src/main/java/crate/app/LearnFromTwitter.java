@@ -1,7 +1,8 @@
 package crate.app;
 
 import com.cybozu.labs.langdetect.LangDetectException;
-import crate.util.TwitterUtil;
+import crate.util.ArgumentParser;
+import joptsimple.OptionParser;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -17,42 +18,56 @@ import org.apache.spark.sql.SparkSession;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Properties;
 
 import static crate.meta.Metadata.*;
-import static crate.util.TwitterUtil.crate;
-import static crate.util.TwitterUtil.spark;
+import static crate.util.TwitterUtil.prepareTweets;
+
 
 public class LearnFromTwitter {
 
-    public static void main(String[] args) throws IOException, LangDetectException {
+    public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
 
+        OptionParser parser = new OptionParser();
+        parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
+        parser.acceptsAll(Arrays.asList("u", "user"), "crate user for connection e.g. crate").withRequiredArg().required();
+        parser.acceptsAll(Arrays.asList("d", "driver"), "crate jdbc driver class").withRequiredArg().defaultsTo("io.crate.client.jdbc.CrateDriver");
+
+        Properties properties = ArgumentParser.parse(args, parser, null);
 
         // initialize spark session
         SparkSession session = SparkSession
                 .builder()
                 .appName("Learn From Twitter")
-                .master(spark.getProperty("spark.master"))
                 .getOrCreate();
 
+        learnFromTwitter(session, properties);
+
+        session.stop();
+    }
+
+    public static void learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
         // fetch data
         Dataset<Row> original = session
                 .read()
                 .jdbc(
-                        crate.getProperty("url"),
+                        properties.getProperty("connection-url"),
                         "(SELECT text from tweets) as tweets",
-                        crate
+                        properties
                 );
 
         // ************
         // preparations
         // ************
 
-        Dataset<Row> rawLabeled = TwitterUtil.prepareTweets(original, 30, true);
+        Dataset<Row> rawLabeled = prepareTweets(original, 30, true);
 
         // label indexing
         StringIndexerModel labelIndexer = new StringIndexer()
@@ -139,16 +154,15 @@ public class LearnFromTwitter {
         PipelineModel model = (PipelineModel) validator.fit(prepared).bestModel();
 
         // Save the model and delete old one if existing
-        String modelFileName = spark.getProperty("spark.model");
-        if (Files.isDirectory(Paths.get(modelFileName))) {
-            Path rootPath = Paths.get(modelFileName);
+        if (Files.isDirectory(Paths.get(TWITTER_MODEL))) {
+            Path rootPath = Paths.get(TWITTER_MODEL);
             Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .forEach(File::delete);
         }
-        model.save(modelFileName);
+        model.save(TWITTER_MODEL);
 
-        session.stop();
     }
+
 }
