@@ -58,7 +58,7 @@ public class PredictCrateData {
                 .read()
                 .jdbc(
                         properties.getProperty("connection-url"),
-                        "(SELECT created_at, id, source, text from tweets) as tweets",
+                        "(SELECT t.id, t.created_at, t.text from tweets t left join predicted_tweets p on t.id = p.id where p.id is null) as tweets",
                         properties
                 );
 
