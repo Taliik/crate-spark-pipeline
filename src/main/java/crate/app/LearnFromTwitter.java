@@ -147,7 +147,10 @@ public class LearnFromTwitter {
         // find best model
         PipelineModel model = (PipelineModel) validator.fit(prepared).bestModel();
 
-        model.write().overwrite().save(properties.getProperty("model-path"));
+        model
+            .write()
+            .overwrite()
+            .save(properties.getProperty("model-path"));
     }
 
 }
