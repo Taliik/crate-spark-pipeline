@@ -11,8 +11,6 @@ import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -27,6 +25,7 @@ public class PredictCrateData {
         parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
         parser.acceptsAll(Arrays.asList("u", "user"), "crate user for connection e.g. crate").withRequiredArg().required();
         parser.acceptsAll(Arrays.asList("d", "driver"), "crate jdbc driver class").withRequiredArg().defaultsTo("io.crate.client.jdbc.CrateDriver");
+        parser.acceptsAll(Arrays.asList("m", "model-path"), "path of machine learning model used for save/load").withRequiredArg().required();
 
         Properties properties = ArgumentParser.parse(args, parser, null);
 
@@ -43,15 +42,8 @@ public class PredictCrateData {
 
     public static void predictCrateData(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
 
-        // read prediction model
-        if (Files.notExists(Paths.get(TWITTER_MODEL))) {
-            throw new IllegalArgumentException(
-                    String.format("Could not find %s.", TWITTER_MODEL)
-            );
-        }
-
         // load model
-        PipelineModel model = PipelineModel.load(TWITTER_MODEL);
+        PipelineModel model = PipelineModel.load(properties.getProperty("model-path"));
 
         // fetch data
         Dataset<Row> original = session

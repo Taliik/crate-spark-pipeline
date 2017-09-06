@@ -14,6 +14,7 @@ import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.ParamGridBuilder;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
@@ -24,7 +25,7 @@ import java.util.Properties;
 import static crate.meta.Metadata.*;
 import static crate.util.TwitterUtil.prepareTweets;
 
-public class LearnFromTwitter {
+public class LearnAndPredictRemote {
 
     public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
 
@@ -32,22 +33,22 @@ public class LearnFromTwitter {
         parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
         parser.acceptsAll(Arrays.asList("u", "user"), "crate user for connection e.g. crate").withRequiredArg().required();
         parser.acceptsAll(Arrays.asList("d", "driver"), "crate jdbc driver class").withRequiredArg().defaultsTo("io.crate.client.jdbc.CrateDriver");
-        parser.acceptsAll(Arrays.asList("m", "model-path"), "path of machine learning model used for save/load").withRequiredArg().required();
 
         Properties properties = ArgumentParser.parse(args, parser, null);
 
-        // initialize spark session
         SparkSession session = SparkSession
                 .builder()
-                .appName("Learn From Twitter")
+                .appName("LearnAndPredictLanguage")
                 .getOrCreate();
 
-        learnFromTwitter(session, properties);
+        predictCrateData(session, properties, learnFromTwitter(session, properties));
 
         session.stop();
+
     }
 
-    public static void learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
+    public static PipelineModel learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
+
         // fetch data
         Dataset<Row> original = session
                 .read()
@@ -147,7 +148,36 @@ public class LearnFromTwitter {
         // find best model
         PipelineModel model = (PipelineModel) validator.fit(prepared).bestModel();
 
-        model.write().overwrite().save(properties.getProperty("model-path"));
+        return model;
+    }
+
+    public static void predictCrateData(SparkSession session, Properties properties, PipelineModel model) throws IOException, LangDetectException, URISyntaxException {
+        // fetch data
+        Dataset<Row> original = session
+                .read()
+                .jdbc(
+                        properties.getProperty("connection-url"),
+                        "(SELECT t.id, t.created_at, t.text from tweets t left join predicted_tweets p on t.id = p.id where p.id is null) as tweets",
+                        properties
+                );
+
+        // ************
+        // preparations
+        // ************
+        Dataset<Row> prepared = prepareTweets(original, 30, true);
+
+        // predict crate data
+        Dataset<Row> predicted = model.transform(prepared);
+
+        // write data back to crate
+        predicted.select("id", "created_at", TEXT_ORIGINAL, PREDICTION, LABEL_ORIGINAL)
+                .write()
+                .mode(SaveMode.Append)
+                .jdbc(
+                        properties.getProperty("connection-url"),
+                        "predicted_tweets",
+                        properties
+                );
     }
 
 }
