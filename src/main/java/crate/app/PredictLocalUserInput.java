@@ -26,9 +26,6 @@ public class PredictLocalUserInput {
     public static void main(String[] args) throws IOException {
 
         OptionParser parser = new OptionParser();
-        parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
-        parser.acceptsAll(Arrays.asList("u", "user"), "crate user for connection e.g. crate").withRequiredArg().required();
-        parser.acceptsAll(Arrays.asList("d", "driver"), "crate jdbc driver class").withRequiredArg().defaultsTo("io.crate.client.jdbc.CrateDriver");
         parser.acceptsAll(Arrays.asList("m", "model-path"), "path of machine learning model used for save/load").withRequiredArg().required();
 
         Properties properties = ArgumentParser.parse(args, parser, null);
@@ -36,7 +33,7 @@ public class PredictLocalUserInput {
         // initialize spark session
         SparkSession session = SparkSession
                 .builder()
-                .appName("Predict Local User Input")
+                .appName("Predict Local User Input For Testing Purposes")
                 .getOrCreate();
 
         predictUserInput(session, properties);
