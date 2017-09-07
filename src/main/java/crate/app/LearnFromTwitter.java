@@ -16,20 +16,13 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Properties;
 
 import static crate.meta.Metadata.*;
 import static crate.util.TwitterUtil.prepareTweets;
-
 
 public class LearnFromTwitter {
 
@@ -39,6 +32,7 @@ public class LearnFromTwitter {
         parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
         parser.acceptsAll(Arrays.asList("u", "user"), "crate user for connection e.g. crate").withRequiredArg().required();
         parser.acceptsAll(Arrays.asList("d", "driver"), "crate jdbc driver class").withRequiredArg().defaultsTo("io.crate.client.jdbc.CrateDriver");
+        parser.acceptsAll(Arrays.asList("m", "model-path"), "path of machine learning model used for save/load").withRequiredArg().required();
 
         Properties properties = ArgumentParser.parse(args, parser, null);
 
@@ -153,16 +147,10 @@ public class LearnFromTwitter {
         // find best model
         PipelineModel model = (PipelineModel) validator.fit(prepared).bestModel();
 
-        // Save the model and delete old one if existing
-        if (Files.isDirectory(Paths.get(TWITTER_MODEL))) {
-            Path rootPath = Paths.get(TWITTER_MODEL);
-            Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
-        }
-        model.save(TWITTER_MODEL);
-
+        model
+            .write()
+            .overwrite()
+            .save(properties.getProperty("model-path"));
     }
 
 }

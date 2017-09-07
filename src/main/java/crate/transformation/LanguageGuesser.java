@@ -9,8 +9,7 @@ import scala.Function1;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import static com.cybozu.labs.langdetect.DetectorFactory.create;
-import static com.cybozu.labs.langdetect.DetectorFactory.loadProfileFromClassPath;
+import static com.cybozu.labs.langdetect.DetectorFactory.*;
 
 public class LanguageGuesser extends IdentifiableUnaryTransformer<String, String, LanguageGuesser> {
 
@@ -29,7 +28,11 @@ public class LanguageGuesser extends IdentifiableUnaryTransformer<String, String
     private void init() throws LangDetectException, IOException, URISyntaxException {
         if (initializeDetectorFactory) {
             initializeDetectorFactory = false;
-            loadProfileFromClassPath();
+            try {
+                loadProfileFromClassPath();
+            } catch (IllegalArgumentException e) {
+                loadProfile(LanguageGuesser.class.getResource("/profiles").getFile());
+            }
         }
     }
 
