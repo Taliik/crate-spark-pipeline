@@ -1,62 +1,93 @@
 # CrateDB + Apache Spark
 
-CrateDB is a distributed SQL database system which is capable of managing huge amounts of data in real time.
-CrateDB provides an easy, horizontal scalable and system independent solution built for IoT applications.
-This project explains the necessary steps to combine CrateDB with Apache Spark, a lightning fast cluster system which offers a variety operations for BigData.
-A really poplar feature of Spark is machine learning, which will be covered here.
-This project explains the necessary steps to apply machine learning algorithms on big data.
-For storage and ingestion, CrateDB is the software to store and query an incredible amount of data in real time.
-For machine learning, Apache Spark is the quick and easy way to produce machine learning models.
+[CrateDB](http://crate.io) is a distributed SQL database system which is capable of managing huge amounts of data in real time.
+It is an easy, horizontal scalable, efficient and system independent solution built for IoT applications.
+
+Though CrateDB is a pretty solid choice for managing BigData, it was not built for performing general data analysis.
+This project adds this feature to CrateDB by creating a connection with Apache Spark as data processing tool.
+
+[Apache Spark](http://spark.apache.org) is a cluster computing engine which offers lots and lots of various data operations.
+All data operations are done in a distributed way, where all computations are done in RAM, which performs about 100x times faster than the previous Apache Hadoop system.
+A really poplar feature of Spark is machine learning, which will also be covered here.
 
 Since the theory may be complex at first sight, a simple use case helps to explain the theory behind.
 
 ## Requirements
 
-To get your hands dirty you will need:
-* CrateDB cluster (either local e.g. via `docker-compose` or remote)
-* Apache Spark cluster (either local or remote)
-* A dataset which you want to use for machine learning e.g. twitter tweets
+To get your hands dirty on this project you will need:
+
+* CrateDB cluster
+* Apache Spark cluster
+* A dataset which you want to use e.g. twitter tweets
 * An idea what you want to accomplish with that dataset e.g. language identification of text
 
 ## Use Case
 
-The program is a language identifier, where the input is a custom text and the outcome is the predicted language.
+Every solution starts with a problem.
+These articles should give an idea of the problems which can be solved with this approach.
+
+* [Top five Spark use cases](https://www.dezyre.com/article/top-5-apache-spark-use-cases/271)
+* [Spark (notable) use cases](https://jaceklaskowski.gitbooks.io/mastering-apache-spark/exercises/spark-notable-use-cases.html)
+* [Introduction to Apache Spark with Examples and Use Cases](https://www.toptal.com/spark/introduction-to-apache-spark)
+
+---
+
+To keep everything as simple as possible, this project takes care of a rather simple task: language identification.
+The general idea of this process is to take some text as input and predict the possible language as outcome.
 
 e.g. When entering "Today is a good day!" program should identify the text as english language.
 
-The training data for language prediction consists of a custom dataset of twitter tweets and their corresponding language.
+This language identification is not hardcoded into a program, which follows a bunch of rules to get to the correct language.
+Instead, a machine learning algorithm trained by Twitter Tweets, takes care of the identification.
 
-## Raw Dataset
+## Dataset
 
-For this example, the used dataset are twitter tweets, which can be easily inserted into CrateDB by one click.
-Note that the receiving of the dataset requires a Twitter account.
+In the beginning a dataset is needed which shall be used later on.
+This dataset could either consist of sensor data produced by industry, social media data, stock prices, etc.
 
-Simply navigate to Crate Admin UI (hostname:4200/#/help) and hit `import tweets for testing`
+For importing datasets, please refert to the [CrateDB documentation](https://crate.io/docs/crate/guide/index.html)
 
-![alt text][import_tweets]
+---
 
-After authorization, crate will import a few tweet messages into a table named `tweets`
+For this example, the used dataset are Twitter Tweets, which can be easily inserted into CrateDB by one click.
+Note that the import of the data requires a Twitter account.
 
-For importing other datasets, please see [the documentation](https://crate.io/docs/crate/guide/index.html)
+Simply navigate to Crate Admin UI (hostname:4200/#/help) and hit `import tweets for testing`.
+
+![alt text](import_tweets.png)
+
+After authorization, CrateDB will import a few tweet messages into a table named `tweets`.
 
 ## Idea
 
-For the next steps you need to define what you actually want to achieve with this dataset. Also, it is a good idea to do some research about the situation before.
+For the next steps an idea needs to be defined how a possible solution could look like with this dataset.
+
+Especially when trying to solve a machine learning problem, it is a good idea to do some research about the situation beforehand.
+This way it is easier to determine a suitable plan to a solution.
+On the other hand it is also necessary to know if machine learning is even the right approach to solve this particular problem.
+These two articles give a good overview to get started:
+
+* [How to choose algorithms for Microsoft Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/machine-learning-algorithm-choice)
+* [Essentials of Machine Learning Algorithms](https://www.analyticsvidhya.com/blog/2015/08/common-machine-learning-algorithms/)
 
 ---
 
 For this use case, the main goal is to identify the language of a given text using a machine learning model.
+After some research the language identification problem can be categorized as a [classification](https://en.wikipedia.org/wiki/Statistical_classification) problem.
 
-## Preparations
+## Dataset Preparations
 
-Almost no dataset is already in a usable format for machine learning. These datasets need some preparations beforehand. Preparations depend on the state of the dataset
+Almost no dataset is already in a usable format for a custom situation.
+These datasets need some preparations beforehand.
 
-* does the dataset contain the all the essential features?
-* is the dataset labeled? (only needed for supervised machine learning)
+Preparations depend on the state of the dataset:
+* Does the dataset contain the all the essential features or is some information missing?
+* Is the data consistent or are there lots of errors and invalid data?
 
 ---
 
-The desired state of the data for training looks something like this:
+For this project desired state of the data for training looks something like this:
+
 ```
 +===========================+===========+
 |text                       |language   |
@@ -67,17 +98,39 @@ The desired state of the data for training looks something like this:
 +---------------------------+-----------+
 |...                        |...        |
 +---------------------------+-----------+
-
 ```
 
-To get to this state the training data needs to be cleaned, filtered, and labeled. 
-After these transformations the training data is prepared and ready for machine learning.
+But when having a look at the current state, the data may not look as it should:
+```
++===========================================================================================================+
+| text                                                                                                      |
++===========================================================================================================+
+| @wachakonochi 出番、お疲れ様でした。                                                                         |
++-----------------------------------------------------------------------------------------------------------+
+| RT @selma_topsakal3: #izmirescort https://t.co/hKoJriVH6k                                                 |
++-----------------------------------------------------------------------------------------------------------+
+| RT @sweet_haribo: 갑자기 앨범 하나에서 세장의 포카가 후득 떨어졌다. 삼백현이었다. 올해 운 다 썼다. https://t.co/1XeW9fLRhY   |
++-----------------------------------------------------------------------------------------------------------+
+| RT @marcorubio: For all of S.Fla, all preparations evacuations should be COMPLETED by sunset on Friday.   |
++-----------------------------------------------------------------------------------------------------------+
+| posição 20115 no Ranking segue-de-volta. Confira os 100 primeiros: https://t.co/VhYsyMzBHF. #1 @asciiART  |
++-----------------------------------------------------------------------------------------------------------+
+| #chibalotte                                                                                               |
++-----------------------------------------------------------------------------------------------------------+
+| رفرف على #الحد_الجنوبي                                                                                         |
++-----------------------------------------------------------------------------------------------------------+
+| 😆😆😆                                                                                                     |
++-----------------------------------------------------------------------------------------------------------+
+```
 
-## Transformations
+To get from current to the desired state the data needs to be cleaned, filtered, and labeled.
+These operations can be done by using transformations in Spark.
 
-A [transformation][definition_transformation] basically is the process of adding, editing, removing, combining parts of
-one or more column(s) (also called feature(s)) of a dataset and storing the new value in a new feature.
-In a pipeline all defined transformations are applied to each data record of the dataset in the order they were defined.
+### Transformations
+
+A [transformation](https://spark.apache.org/docs/latest/ml-pipeline.html#main-concepts-in-pipelines) basically is the process of adding, editing, removing, combining parts of
+one or more column(s) of a dataset and storing the outcome in a new column.
+Transformations are applied in their defined order on all rows of a dataset. 
 
 ---
 
@@ -92,33 +145,39 @@ These segments are dropped:
 * Emojis 😋😉
 
 To provide reliable texts to the language detection algorithm, it is also recommended to set a minimum text length.
+After these transformations the training data is almost prepared and ready for machine learning.
 
-## Labeling
+### Labeling
 
-For [supervised machine learning][definition_supervised_machine_learning] the algorithm needs to know the correct answer of a given input.
-[Unsupervised machine learning][definition_unsupervised_machine_learning] does not need to have labels.
+For [supervised machine learning](https://en.wikipedia.org/wiki/Supervised_learning) the algorithm needs to know the correct answer of a given input.
+[Unsupervised machine learning](https://en.wikipedia.org/wiki/Unsupervised_learning) does not need to have labels.
 
 ---
 
-An easy way to provide this label for this use case, is the usage of a [language detection library][language_library].
+A label is still missing in the current training data. 
+An easy way to provide the label for this use case is the usage of a [language detection library](https://github.com/shuyo/language-detection).
+After this step, the training data has the desired format.
 
-After this step, the training data is now cleaned and labeled and ready for supervised machine learning.
+## Pipeline
 
-## Machine Learning
+Since the dataset finally is in the desired state the main-work-process can begin.   
+This process consists of an ordered list of transformations and estimations, which are applied on the dataset. 
 
 ### Feature preparation
 
-[Features][definition_features] are one or more characteristics of a situation which are used as a input parameters of machine learning. After training a model, this model tries to use these features to get to a solution.
+[Features](https://stackoverflow.com/a/40899529) are one or more characteristics of a situation which are used as a input parameters of machine learning.
+After training a model, this model tries to use the features of unknown problems to get to a solution.
+
 For machine learning, features are usually a set of numbers.
 But since the current features are texts, a few steps are needed to get to numbers.
 
 #### Tokenizer + N-Gram
 
-[Tokenization][definition_tokenization] in terms of language processing is the process of splitting text into smaller segments. These segments can either be words, silblings, sentences or single characters (whitespace included).
+[Tokenization](https://en.wikipedia.org/wiki/Lexical_analysis#Tokenization) in terms of language processing is the process of splitting text into smaller segments. These segments can either be words, silblings, sentences or single characters (whitespace included).
 
 ---
 
-The first language identification approach which comes to peoples minds is the learning of every word in every language. This is a bad approach since there are a lot of words. A better method (which is used here) is the usage of n-grams. [Read more about N-Gram method][ngram_method].
+The first language identification approach which comes to peoples minds is the learning of every word in every language. This is a bad approach since there are a lot of words. A better method (which is used here) is the usage of n-grams. [Read more about N-Gram method](https://stats.stackexchange.com/a/144903).
 
 For this project, the text will be split into lowercase characters, which are then combined to groups of size n, where n is a numeric value.
 These groups are then used further. 
@@ -129,10 +188,8 @@ Unfortunately, Spark is not capable of machine learning using texts. These texts
 
 ### Label preparation
 
-[Labels][definition_labels] are the solution of a given problem.
+[Labels](https://stackoverflow.com/a/40899529) are the solution of a given problem.
 But since machine learning can only be applied on numeric values, Spark provides two good solutions to transform texts into indices and back.
-<<<<<<< HEAD
-=======
 
 #### String Indexer 
 
@@ -140,11 +197,30 @@ But since machine learning can only be applied on numeric values, Spark provides
 
 ### Machine Learning Algorithm
 
-# Pipeline
+## Tuning
 
-# Tuning
+## Fetch Data from CrateDB using Spark
+
+## Ingest Data into CrateDB using Spark
+
+
+---
+
+
+
+
 
 # Apps
+
+## LearnFromTwitter
+
+## PredictCrateData
+
+## LearnAndPredict
+
+## PredictLocalUserInput
+
+
 
 # Evaluation
 
@@ -157,13 +233,3 @@ from
     (select count(*) as c from predicted_tweets where label=prediction) as correct,
     (select count(*) as p from predicted_tweets) as predicted
 ```
-
-[import_tweets]: import_tweets.png
-[definition_transformation]: https://spark.apache.org/docs/latest/ml-pipeline.html#main-concepts-in-pipelines
-[definition_supervised_machine_learning]: https://en.wikipedia.org/wiki/Supervised_learning
-[definition_unsupervised_machine_learning]: https://en.wikipedia.org/wiki/Unsupervised_learning
-[definition_features]: https://stackoverflow.com/a/40899529
-[definition_tokenization]: https://en.wikipedia.org/wiki/Lexical_analysis#Tokenization
-[language_library]: https://github.com/shuyo/language-detection
-[ngram_method]: https://stats.stackexchange.com/a/144903
-[definition_labels]: https://stackoverflow.com/a/40899529
