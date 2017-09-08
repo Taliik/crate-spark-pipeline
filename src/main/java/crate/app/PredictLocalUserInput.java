@@ -21,6 +21,9 @@ import java.util.Properties;
 import static crate.meta.Metadata.PREDICTION;
 import static crate.meta.Metadata.TEXT_FILTERED;
 
+/**
+ * PredictLocalUserInput is an application which is launched at a local Spark instance. This is mainly for testing purposes.
+ */
 public class PredictLocalUserInput {
 
     public static void main(String[] args) throws IOException {

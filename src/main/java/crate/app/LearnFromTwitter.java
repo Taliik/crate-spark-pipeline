@@ -24,6 +24,9 @@ import java.util.Properties;
 import static crate.meta.Metadata.*;
 import static crate.util.TwitterUtil.prepareTweets;
 
+/**
+ * LearnFromTwitter takes all currently imported Tweets from CrateDB and creates a machine learning model to predict languages of texts and stores the model at a given path.
+ */
 public class LearnFromTwitter {
 
     public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
@@ -36,7 +39,7 @@ public class LearnFromTwitter {
 
         Properties properties = ArgumentParser.parse(args, parser, null);
 
-        // initialize spark session
+        // initialize SparkSession
         SparkSession session = SparkSession
                 .builder()
                 .appName("Learn From Twitter")
@@ -48,7 +51,7 @@ public class LearnFromTwitter {
     }
 
     public static void learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
-        // fetch data
+        // fetch data from CrateDB using JDBC connection
         Dataset<Row> original = session
                 .read()
                 .jdbc(
@@ -63,7 +66,7 @@ public class LearnFromTwitter {
 
         Dataset<Row> rawLabeled = prepareTweets(original, 30, true);
 
-        // label indexing
+        // transform label to calculatable numbers
         StringIndexerModel labelIndexer = new StringIndexer()
                 .setInputCol(LABEL_ORIGINAL)
                 .setOutputCol(LABEL_INDEXED)
@@ -89,7 +92,7 @@ public class LearnFromTwitter {
                 .setInputCol(TEXT_TOKENIZED)
                 .setOutputCol(TEXT_N_GRAM);
 
-        // hashing-tf - convert text to calculatable numbers
+        // transform text-features to calculatable features
         HashingTF featurizer = new HashingTF()
                 .setInputCol(TEXT_N_GRAM)
                 .setOutputCol(TEXT_FEATURED);

@@ -13,10 +13,12 @@ import java.util.Properties;
 import static crate.app.LearnFromTwitter.learnFromTwitter;
 import static crate.app.PredictCrateData.predictCrateData;
 
+/**
+ * This class simply combines LearnFromTwitter and PredictCrateData.
+ */
 public class LearnAndPredict {
 
     public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
-
         OptionParser parser = new OptionParser();
         parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
         parser.acceptsAll(Arrays.asList("u", "user"), "crate user for connection e.g. crate").withRequiredArg().required();
@@ -34,6 +36,5 @@ public class LearnAndPredict {
         predictCrateData(session, properties);
 
         session.stop();
-
     }
 }

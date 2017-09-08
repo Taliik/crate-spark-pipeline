@@ -17,6 +17,9 @@ import java.util.Properties;
 import static crate.meta.Metadata.*;
 import static crate.util.TwitterUtil.prepareTweets;
 
+/**
+ * PredictCrateData loads a language prediction model from a given path to predict all currently imported Tweets from CrateDB and stores the new data with predictions in a new `predicted_tweets` table.
+ */
 public class PredictCrateData {
 
     public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
