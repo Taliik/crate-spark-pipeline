@@ -2,128 +2,30 @@
 
 ## About
 
-[CrateDB](http://crate.io) is a distributed SQL database system which is capable of managing huge amounts of data in real time.
-It is an easy, horizontal scalable, efficient and system independent solution built for IoT applications.
+[CrateDB](http://crate.io) is a distributed SQL database that makes it simple to store and analyze massive amounts of machine data in real-time.
 
-Though CrateDB is a pretty solid choice for managing BigData, it was not built for performing general data analysis.
-This project adds this feature to CrateDB by creating a connection with Apache Spark as data processing tool.
+Features of CrateDB:
+
+* Standard SQL plus dynamic schemas, queryable objects, geospatial features, time series data, first-class BLOB support, and realtime full-text search
+* Horizontally scalable, highly available, and fault tolerant clusters that run very well in virtualized and containerised environments
+* Extremely fast distributed query execution
+* Auto-partitioning, auto-sharding, and auto-replication
+* Self-healing and auto-rebalancing
+
+CrateDB offers the scalability and flexibility typically associated with a NoSQL database and is designed to run on inexpensive commodity servers and can be deployed and run across any sort of network. From personal computers to multi-region hybrid clouds.
+
+The smallest CrateDB clusters can easily ingest tens of thousands of records per second. And this data can be queried, ad-hoc, in parallel across the whole cluster in real time.
+
+Though CrateDB is a pretty solid choice for managing Big Data, it was not built for advanced data processing that exceeds the capabilities of standard SQL.
+This project overcomes those limitations by connecting CrateDB with Apache Spark.
+
+![circulation](circulation.png)
 
 [Apache Spark](http://spark.apache.org) is a cluster computing engine which offers lots and lots of various data operations.
-All data operations are done in a distributed way, where all computations are done in RAM, which performs about 100x times faster than the previous Apache Hadoop system.
+All data operations could be run in a distributed way, where all computations are done in RAM if possible, which performs about 100x times faster than the previous Apache Hadoop system.
 A really poplar feature of Spark is machine learning, which will mainly be covered here.
 
 Since the theory may be complex at first sight, a simple use case helps to explain the theory behind.
-
-### Known Issues and Limits
-
-For this project, it was not possible to solve every occuring problem at its source.
-But for almost every known problem a workarround could be made. 
-These problems may be fixed in future.
-
-#### No automatic creation of tables from Spark
-
-Since there is currently no CrateDB SQL Dialect implemented in JDBC it is not possible automatically create every table automatically.
-Therefore, every table in which data shall be ingested via Sparks JDBC interface must be created manually.
-
-The create table statements needed for this use case can be found in the section "Use Case Setup".
-
-#### No streaming between CrateDB and Spark
-
-At the moment writing this document it is not possible to create a streaming application due to following reasons:
-
-* Spark does not yet support streaming via JDBC
-* Sparks machine learning algorithms are currently not made for stream-based applications
-
-One possible way to get around this issue is to fetch only data which has no predictions already.
-This job needs to be executed at regular intervals then.
-
-#### Persisting a machine learning model in a cluster
-
-Since the computations done in a cluster are distributed, also the persistence must be in a distributed or a central way.
-The supported distributed ways to persist in Spark is via hdfs protocol.
-A central approach would be for example s3a protocol.
-
-#### The language guesses for short sentences are not always correct
-
-This occurs, when languages of training data are unevenly distributed.
-If for example 90% of all training data is english, then all often occuring english n-grams are going to be heavier weighted than other languages.
-The language guesses get better, if longer texts are used for identification.
-
-### Requirements
-
-To get your hands dirty on a project like this you will need:
-
-* A CrateDB instance/cluster
-* A Apache Spark instance/cluster
-* A dataset which you want to use e.g. twitter tweets
-* An idea what you want to accomplish with that dataset e.g. language identification of text
-
-### Use Case Setup
-
-Please note that this project does not take care of everything needed for this use case automatically.
-The following steps need to be performed manually:
-
-#### Creation of the table `predicted_tweets`
-
-Please see in section Use Case Queries.
-
-### Use Case Apps
-
-This project contains four standalone apps which can be launched on Spark.
-
-#### LearnFromTwitter
-
-LearnFromTwitter takes all currently imported Tweets from CrateDB and creates a machine learning model to predict languages of texts and stores
-the model at a given path.
-
-#### PredictCrateData
-
-PredictCrateData loads a language prediction model from a given path to predict all currently imported Tweets from CrateDB and stores
-the new data with predictions in a new `predicted_tweets` table.
-
-#### LearnAndPredict
-
-This class simply combines LearnFromTwitter and PredictCrateData.
-
-#### PredictLocalUserInput
-
-PredictLocalUserInput is an application which is launched at a local Spark instance. This is mainly for testing purposes.
-
-### Use Case Queries
-
-#### Create predicted data table
-
-The following query creates a table to store predicted tweets:
-
-``` sql
-create table predicted_tweets (
- id string primary key,
- created_at timestamp,
- text string,
- prediction string,
- label string
-)
-```
-
-Please note that the column `label` is optional, whether a evaluation query is executed or not.
-For future use-cases, it would not make sense to include the solution to every column.
-The solving should be the job of the machine learning model.
-
-#### Evaluate predicted data (with label column only!)
-
-The following query gives information about the quality of the model:
-
-``` sql
-select
-    correct.c as correct,
-    predicted.p as predicted,
-    (correct.c::double/predicted.p::double*100.0) as percent_successrate
-from
-    (select count(*) as c from predicted_tweets where label=prediction) as correct,
-    (select count(*) as p from predicted_tweets) as predicted
-```
-
-## Guide
 
 ### Use Case
 
@@ -150,6 +52,188 @@ e.g. When entering "Today is a good day!" program should identify the text as en
 
 After some research the language identification problem can be categorized as a [classification](https://en.wikipedia.org/wiki/Statistical_classification) problem.
 
+### Requirements
+
+To get your hands dirty on a project like this you will need:
+
+* A CrateDB instance/cluster
+* An Apache Spark instance/cluster
+* A dataset which you want to use e.g. twitter tweets
+* An idea what you want to accomplish with that dataset e.g. language identification of text
+
+### Use Case Setup
+
+Please note that this project does not take care of everything needed for this use case automatically.
+The following steps need to be performed manually:
+
+* [Creation of the table `predicted_tweets`](#Create predicted data table)
+
+### Use Case Apps
+
+This project contains four standalone apps which can be launched on Spark.
+All apps are located in one project which can be packaged into one single jar file.
+A sample usage how to launch each app and what they do is explained underneath.
+
+#### LearnFromTwitter
+
+This app is able to create a language identification model based on Twitter data.
+The Twitter data is received from a table named `tweets` inside CrateDB by using a JDBC connection String and a user to interact with CrateDB.
+The trained model is then trained using these tweets and stored afterwards at a given location.
+This model can then be further used in other applications to solve language identification problems.
+
+##### Required Parameters
+
+* ``--connection-url <connection-string>`` or shorter ``-c <connection-string>`` which is used as a JDBC data source
+* ``--user <crate-user>`` or shorter ``-u <crate-user>`` which is used for authentication for JDBC
+* ``--model-path <model-path>`` or shorter ``-m <model-path>`` which determines the path to store the generated model
+
+##### Optional Parameters
+
+* ``--driver <driver-class> or shorter ``-d <driver-class>`` used as JDBC driver class (defaults to "io.crate.client.jdbc.CrateDriver")
+
+#### PredictCrateData
+
+PredictCrateData loads a language prediction model from a given path to predict all currently imported but unpredicted Tweets from CrateDB and stores
+the new data with predictions in a new `predicted_tweets` table.
+
+#### LearnAndPredict
+
+This class simply combines LearnFromTwitter and PredictCrateData.
+
+#### PredictLocalUserInput
+
+PredictLocalUserInput is an application which is launched at a local Spark instance. This is mainly for testing purposes.
+
+#### Example usages
+
+launch LearnAndPredict locally with a local crate instance and a local relative model path using `spark-submit` on command line (Spark has to be installed)
+``` bash
+./bin/spark-submit --class crate.app.LearnAndPredict --master "local[*]" file:///tmp/crate-spark-pipeline/target/spark-jobs-1.0.jar --user crate --connection-url "jdbc:crate://localhost:5432/?strict=true" --model-path ./mymodels/languageidentifier
+```
+
+launch PredictCrateData remotely with a remote crate instance and a model located on s3 using curl on command line (Spark does not have to be installed on client)
+with a jar located on a http server
+``` bash
+`curl -X POST http://192.168.43.143:6066/v1/submissions/create --header "Content-Type:application/json;charset=UTF-8" --data '{
+   "action" : "CreateSubmissionRequest",
+   "appArgs" : [ "-u", "crate", "-c", "jdbc:crate://192.168.43.143:5432/?strict=true", "-m", "s3a://ACCESSKEYABCDEFGHIJKLMNOPQRS:SECRETKEYTUVWXYZ1234567890@my-personal-bucket/model"  ],
+   "appResource" : "http://192.168.43.159:9000/spark-jobs-1.0.jar",
+   "clientSparkVersion" : "2.2.0",
+   "environmentVariables" : {
+   "SPARK_ENV_LOADED" : "1"
+ },
+ "mainClass" : "crate.app.PredictCrateData",
+ "sparkProperties" : {
+     "spark.jars" : "",
+     "spark.driver.supervise" : "false",
+     "spark.app.name" : "MyRemoteClientJob",
+     "spark.eventLog.enabled": "true",
+     "spark.submit.deployMode" : "cluster",
+     "spark.master" : "spark://192.168.43.143:6066"
+ }
+}'`
+```
+
+launch PredictLocalUserInput locally with a local crate instance and a local local relative model path using IDE during development
+# bild von IDE einfügen
+
+### Use Case Queries
+
+#### Create predicted data table
+
+The following query creates a table to store predicted tweets:
+
+``` sql
+create table predicted_tweets (
+ id string primary key,
+ created_at timestamp,
+ text string,
+ prediction string,
+ label string
+)
+```
+
+Please note that the column `label` is optional, whether an evaluation query is executed or not.
+For future use-cases, it would not make sense to include the solution to every column.
+The solving should be the job of the machine learning model.
+
+#### Evaluate predicted data (with label column only!)
+
+The following query gives information about the quality of the model:
+
+``` sql
+select
+    correct.c as correct,
+    predicted.p as predicted,
+    (correct.c::double/predicted.p::double*100.0) as percent_successrate
+from
+    (select count(*) as c from predicted_tweets where label=prediction) as correct,
+    (select count(*) as p from predicted_tweets) as predicted
+```
+
+### Known Issues and Limits
+
+For this project, it was not possible to solve every occuring problem at its source.
+But for almost every known problem a workaround could be made. 
+These problems may be fixed in future.
+
+#### No automatic creation of tables from Spark
+
+Since there is currently no CrateDB SQL Dialect implemented in JDBC it is not possible automatically create every table automatically.
+Therefore, every table in which data shall be ingested via Sparks JDBC interface must be created manually.
+
+The create table statements needed for this use case can be found in the section "Use Case Setup".
+
+#### No streaming between CrateDB and Spark
+
+At the moment writing this document it is not possible to create a streaming application due to following reasons:
+
+* Spark does not yet support streaming via JDBC
+* Sparks machine learning algorithms are currently not made for stream-based applications
+
+One possible way to get around this issue is to fetch only data which has no predictions already.
+This job needs to be executed at regular intervals then.
+
+#### Persisting a machine learning model in a cluster
+
+When it comes to persistence, Spark offers the opportunity to persist current progress in case of reuse at a later time.
+Unfortunately, Spark does not yet support to write progress back into a database.
+Although, there are some other options to persist data in Spark.
+
+##### Local
+
+This option is only recommended during development in standalone mode and should not be used when going in production environment.
+Local storage won't work for loading persisted data in the cluster, because Spark does not know how to reassemble distributed persisted data.
+
+example paths to save and load progress locally:
+
+* `relative/path/to/model`
+* `/absolute/path/to/model`
+
+##### Using hdfs protocol
+
+For production use, probably the best way to persist data is using a Hadoop Distributed File System on which Spark is usually set up on.
+
+example paths to save and load progress using hdfs protocol:
+
+* `hdfs://host_node:port/path/to/distributed/model`
+
+##### Using s3a protocol
+
+This is another option if no Hadoop Distributed File System is set up, or if the data shall be re-used on several clusters.
+
+example paths to save and load progress using hdfs protocol:
+
+* `s3a://access_key:secret_key@bucket-name/model` 
+
+#### The language guesses for short sentences are not always correct
+
+This occurs, when languages of training data are unevenly distributed.
+If for example 90% of all training data is english, then all often occuring english n-grams are going to be heavier weighted than other languages.
+The language guesses get better, if longer texts are used for identification.
+
+## Guide
+
 ### Fetch/Ingest Data from/to CrateDB using Spark
 
 At the moment of writing this document, [JDBC](https://crate.io/docs/clients/jdbc/) is probably the best way to connect CrateDB and Spark.
@@ -168,7 +252,7 @@ Note that the import of the data requires a Twitter account.
 
 Simply navigate to Crate Admin UI (hostname:4200/#/help) and hit `import tweets for testing`.
 
-![alt text](import_tweets.png)
+![import tweets](import_tweets.png)
 
 After authorization, CrateDB will import a few tweet messages into a table named `tweets`.
 
@@ -271,7 +355,7 @@ After this step, the training data has the desired format.
 #### Feature preparation
 
 As soon as the data is in the desired state, the next step is to prepare the input data for machine learning.  
-[Features](https://stackoverflow.com/a/40899529) are one or more characteristics of a situation which are used as a input parameters of machine learning.
+[Features](https://stackoverflow.com/a/40899529) are one or more characteristics of a situation which are used as input parameters of machine learning.
 After training a model, this model tries to use the features of unknown problems to get to a solution.
 
 For machine learning, features are usually a set of numbers.
