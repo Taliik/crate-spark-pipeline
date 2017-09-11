@@ -15,7 +15,7 @@ import static org.apache.spark.sql.functions.length;
 
 public class TwitterUtil {
 
-    public static final Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinLength, boolean label) throws LangDetectException, IOException, URISyntaxException {
+    public static Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinLength, boolean label) throws LangDetectException, IOException, URISyntaxException {
         final String transformationPattern = "(&\\w+;)"
                 //retweets
                 + "|(^RT @\\w+: )"

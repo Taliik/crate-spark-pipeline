@@ -1,8 +1,7 @@
 package crate.app;
 
 import com.cybozu.labs.langdetect.LangDetectException;
-import crate.util.ArgumentParser;
-import joptsimple.OptionParser;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -18,44 +17,44 @@ import org.apache.spark.sql.SparkSession;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import static crate.meta.Metadata.*;
+import static crate.util.ArgumentParser.parse;
+import static crate.util.CrateBlobRepository.save;
 import static crate.util.TwitterUtil.prepareTweets;
 
 /**
- * LearnFromTwitter takes all currently imported Tweets from CrateDB and creates a machine learning model to predict languages of texts and stores the model at a given path.
+ * LearnFromTwitter takes all currently imported Tweets from CrateDB and creates a machine learning model to predict languages of texts and stores the model in a CrateDB BLOB table.
  */
 public class LearnFromTwitter {
 
-    public static void main(String[] args) throws IOException, LangDetectException, URISyntaxException {
+    public static void main(String[] args) throws URISyntaxException, IOException, LangDetectException, SQLException {
+        // load properties
+        Properties properties = parse(args);
 
-        OptionParser parser = new OptionParser();
-        parser.acceptsAll(Arrays.asList("c", "connection-url"), "crate host to connect to e.g. jdbc:crate://localhost:5432/?strict=true").withRequiredArg().required();
-        parser.acceptsAll(Arrays.asList("u", "user"), "crate user for connection e.g. crate").withRequiredArg().required();
-        parser.acceptsAll(Arrays.asList("d", "driver"), "crate jdbc driver class").withRequiredArg().defaultsTo("io.crate.client.jdbc.CrateDriver");
-        parser.acceptsAll(Arrays.asList("m", "model-path"), "path of machine learning model used for save/load").withRequiredArg().required();
-
-        Properties properties = ArgumentParser.parse(args, parser, null);
-
-        // initialize SparkSession
+        // initialize spark session
         SparkSession session = SparkSession
                 .builder()
                 .appName("Learn From Twitter")
                 .getOrCreate();
 
-        learnFromTwitter(session, properties);
+        PipelineModel model = learnFromTwitter(session, properties);
+
+        // broadcast model so the model is complete to save
+        Broadcast<PipelineModel> modelBroadcast = session.sparkContext().broadcast(model, scala.reflect.ClassTag$.MODULE$.apply(PipelineModel.class));
+        save(properties, MODEL_NAME, modelBroadcast.getValue());
 
         session.stop();
     }
 
-    public static void learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
+    public static PipelineModel learnFromTwitter(SparkSession session, Properties properties) throws IOException, LangDetectException, URISyntaxException {
         // fetch data from CrateDB using JDBC connection
         Dataset<Row> original = session
                 .read()
                 .jdbc(
-                        properties.getProperty("connection-url"),
+                        properties.getProperty(CRATE_JDBC_CONNECTION_URL),
                         "(SELECT text from tweets) as tweets",
                         properties
                 );
@@ -150,10 +149,7 @@ public class LearnFromTwitter {
         // find best model
         PipelineModel model = (PipelineModel) validator.fit(prepared).bestModel();
 
-        model
-            .write()
-            .overwrite()
-            .save(properties.getProperty("model-path"));
+        return model;
     }
 
 }
