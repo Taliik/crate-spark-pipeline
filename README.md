@@ -291,7 +291,7 @@ A [transformation](https://spark.apache.org/docs/latest/ml-pipeline.html#main-co
 one or more column(s) of a dataset and storing the outcome in a new column.
 Transformations are applied in their defined order on all rows of a dataset.
 
-Spark already provides a good amount of [transformer tools](http://spark.apache.org/docs/latest/ml-features.html) to get the desired data state to a machine learning usable format.
+Spark already provides a good amount of [transformer tools](http://spark.apache.org/docs/latest/ml-features.html) to manipulate data towards a machine learning usable format.
 Spark also offers an [interface to implement a custom transformer](https://spark.apache.org/docs/latest/api/java/org/apache/spark/ml/UnaryTransformer.html) if none of the tools can do the job.
 
 ---
@@ -388,12 +388,23 @@ Now that all essential components are defined, everything can be put together.
 The result is a [pipeline](http://spark.apache.org/docs/latest/ml-pipeline.html).
 This pipeline consists of an ordered list of transformations and estimatiors (model-producing-components), which can be applied on the dataset. 
 
+---
+
+Since the machine learning model should be capable of identifying any text, it does not make sense to include every step of the preparation of the training data.
+For this use case, the acually performed steps start from the point where the training data preparation is in the desired state:
+
+* Tokenizer (split on character basis and put all lowercase)
+* N-Gram (build groups of characters of size n)
+* Hashing Transformation Function (convert the n-grams to numeric features)
+* Naive Bayes (predict language index using numeric features)
+* Index To String (convert predicted language index to set of language values)
+
 ### Training
 
 Now its time to move onto what is often considered the bulk of machine learning — the training.
 In this step, the pipeline tries to create a model which incrementally improves its ability to predict the solution.
 
-In Spark, the function to train a model on a specific training dataset is called fit where the result is the representing model,
+In Spark, the function to train a model on a specific training dataset is called `fit` where the result is the representing model,
 which fits best with the current configuration on the corresponding training data.
 
 ### Evaluation
@@ -411,6 +422,10 @@ Spark takes care of that for us already in the next section.
 
 Depending on the machine learning problem, a suitable [Evaluator](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.ml.evaluation.Evaluator) has to be used.
 
+---
+
+For this multi-classification problem the usage of a [MulticlassClassificationEvaluator](http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator) seems appropriate.
+
 ### Parameter Tuning
 
 Once evaluation is done, it’s possible to further improve the evaluations score of the pipeline by variating configuration parameters.
@@ -421,14 +436,25 @@ A CrossValidator accepts a set of settings of pipeline components, which can be 
 Note that all steps in the pipeline are executed in every possible given combination.
 This may take a really long time when defining too many different parameters.
 
+---
+
+For this project, after running some experiments, [the results](https://docs.google.com/spreadsheets/d/1IdbGhvVd2GMRGay1ujecE5SLtt76IbxE_kG-tArEG2Q/edit?usp=sharing) show that some transformer settings worked better than others.
+The few settings depending on the input data are used as variable parameters for tuning.
+These are:
+
+* N-Grams size n (varying from 3 to 4)
+* Hashing TFs number of features (varying from 20k over 25k to 30k)
+
 ### Prediction
 
 Machine learning is using data to answer questions.
 So Prediction, or inference, is the step where a model gets to answer questions.
 This is the point of all this work, where the value of machine learning is realized.
 
-### Persisting progress of a cluster in CrateDB
+To predict any given dataset, the resulting models `transform` function applies its predictions on the dataset.
+
+### Persisting progress of Spark in CrateDB
 
 When it comes to persistence, Spark offers the opportunity to persist current progress in case of reuse at a later time.
-With a little workaround, also distributed Spark objects like machine learning models can be persisted in CrateDB using BLOB functionality.
+With a little workaround, also distributed Spark objects implementing java.io.Serializable like machine learning models can be persisted in CrateDB using BLOB functionality.
 To see how it's done, please have a look at [CrateBlobRepository.java](src/main/java/crate/util/CrateBlobRepository.java)
