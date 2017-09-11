@@ -14,6 +14,9 @@ import static crate.meta.Metadata.*;
 import static crate.meta.Metadata.CRATE_HTTP_PORT;
 import static crate.meta.Metadata.TABLE_NAME;
 
+/**
+ * Used to parse main arguments and feed them into a Properties-object.
+ */
 public class ArgumentParser {
 
     public static Properties parse(String[] args) {

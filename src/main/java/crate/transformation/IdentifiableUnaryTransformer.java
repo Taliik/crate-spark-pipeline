@@ -5,6 +5,13 @@ import org.apache.spark.ml.util.Identifiable$;
 
 import java.io.Serializable;
 
+/**
+ * This class solves the uid issues which occur when implementing an UnaryTransformer in Java.
+ *
+ * @param <IN> type that goes in as parameter
+ * @param <OUT> type that goes out as return type
+ * @param <T>
+ */
 public abstract class IdentifiableUnaryTransformer<IN, OUT, T extends IdentifiableUnaryTransformer<IN, OUT, T>> extends UnaryTransformer<IN, OUT, T> implements Serializable {
 
     private String uid;

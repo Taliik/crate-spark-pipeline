@@ -11,6 +11,9 @@ import java.net.URISyntaxException;
 
 import static com.cybozu.labs.langdetect.DetectorFactory.*;
 
+/**
+ * Transformer for language guessing.
+ */
 public class LanguageGuesser extends IdentifiableUnaryTransformer<String, String, LanguageGuesser> {
 
     private static boolean initializeDetectorFactory = true;

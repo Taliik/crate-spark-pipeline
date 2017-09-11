@@ -13,6 +13,9 @@ import static crate.meta.Metadata.*;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.length;
 
+/**
+ * Prepares Twitter Tweets for project use case.
+ */
 public class TwitterUtil {
 
     public static Dataset<Row> prepareTweets(Dataset<Row> original, int tweetMinLength, boolean label) throws LangDetectException, IOException, URISyntaxException {

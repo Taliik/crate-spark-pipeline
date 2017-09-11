@@ -1,7 +1,11 @@
 package crate.meta;
 
+/**
+ * This class holds most of the often used strings to prevent typos in code.
+ */
 public class Metadata {
 
+    // connection properties
     public final static String CRATE_HOST = "crate-host";
     public final static String CRATE_HTTP_PORT = "http-port";
     public final static String CRATE_PSQL_PORT = "psql-port";
@@ -11,9 +15,11 @@ public class Metadata {
     public final static String CRATE_JDBC_CONNECTION_URL = "jdbc-connection-url";
     public final static String CRATE_BLOB_CONNECTION_URL = "blob-connection-url";
 
+    // model storage properties
     public final static String TABLE_NAME = "spark";
     public final static String MODEL_NAME = "languagepredictor";
 
+    // model column properties
     public final static String TEXT_ORIGINAL = "text";
     public final static String TEXT_FILTERED = "filteredText";
     public final static String TEXT_TOKENIZED = "tokenizedText";

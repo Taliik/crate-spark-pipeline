@@ -7,6 +7,9 @@ import scala.Function1;
 
 import java.util.regex.Pattern;
 
+/**
+ * Transformer for String replacement using regular expressions.
+ */
 public class RegexReplacer extends IdentifiableUnaryTransformer<String, String, RegexReplacer> {
 
     private final Param<Pattern> pattern;

@@ -66,7 +66,7 @@ To get your hands dirty on a project like this you will need:
 Please note that this project does not take care of everything needed for this use case automatically.
 The following steps need to be performed manually:
 
-* [Creation of the table `predicted_tweets`](#Create predicted data table)
+* [Creation of the table `predicted_tweets`](#create-predicted-data-table)
 
 ### Use Case Apps
 
@@ -74,27 +74,24 @@ This project contains four standalone apps which can be launched on Spark.
 All apps are located in one project which can be packaged into one single jar file.
 A sample usage how to launch each app and what they do is explained underneath.
 
+The optional parameters are:
+
+* ``--crate-host <crate-host>`` or shorter ``-c <crate-host>`` used for database connection (defaults to `localhost`)
+* ``--http-port <http-port>`` or shorter ``-h <http-port>`` used for http communication with crate-host (defaults to `4200`)
+* ``--psql-port <psql-port>`` or shorter ``-h <psql-port>`` used for psql communication with crate-host (defaults to `5432`)
+* ``--user <crate-user>`` or shorter ``-u <crate-user>`` used for authentication for JDBC (defaults to `crate`)
+* ``--driver <driver-class>`` or shorter ``-d <driver-class>`` used as JDBC driver class (defaults to "io.crate.client.jdbc.CrateDriver")
+
 #### LearnFromTwitter
 
 This app is able to create a language identification model based on Twitter data.
 The Twitter data is received from a table named `tweets` inside CrateDB by using a JDBC connection String and a user to interact with CrateDB.
-The trained model is then trained using these tweets and stored afterwards at a given location.
+The model is then trained using these tweets and stored in a CrateDB BLOB table afterwards.
 This model can then be further used in other applications to solve language identification problems.
-
-##### Required Parameters
-
-* ``--connection-url <connection-string>`` or shorter ``-c <connection-string>`` which is used as a JDBC data source
-* ``--user <crate-user>`` or shorter ``-u <crate-user>`` which is used for authentication for JDBC
-* ``--model-path <model-path>`` or shorter ``-m <model-path>`` which determines the path to store the generated model
-
-##### Optional Parameters
-
-* ``--driver <driver-class> or shorter ``-d <driver-class>`` used as JDBC driver class (defaults to "io.crate.client.jdbc.CrateDriver")
 
 #### PredictCrateData
 
-PredictCrateData loads a language prediction model from a given path to predict all currently imported but unpredicted Tweets from CrateDB and stores
-the new data with predictions in a new `predicted_tweets` table.
+PredictCrateData loads a language prediction model from a CrateDB BLOB table to predict all currently imported but unpredicted Tweets from CrateDB and stores the new data with predictions in a new `predicted_tweets` table.
 
 #### LearnAndPredict
 
@@ -103,20 +100,23 @@ This class simply combines LearnFromTwitter and PredictCrateData.
 #### PredictLocalUserInput
 
 PredictLocalUserInput is an application which is launched at a local Spark instance. This is mainly for testing purposes.
+The model is loaded from a CrateDB BLOB table.
 
 #### Example usages
 
 launch LearnAndPredict locally with a local crate instance and a local relative model path using `spark-submit` on command line (Spark has to be installed)
+
 ``` bash
-./bin/spark-submit --class crate.app.LearnAndPredict --master "local[*]" file:///tmp/crate-spark-pipeline/target/spark-jobs-1.0.jar --user crate --connection-url "jdbc:crate://localhost:5432/?strict=true" --model-path ./mymodels/languageidentifier
+./bin/spark-submit --class crate.app.LearnAndPredict --master "local[*]" file:///tmp/crate-spark-pipeline/target/spark-jobs-1.0.jar
 ```
 
-launch PredictCrateData remotely with a remote crate instance and a model located on s3 using curl on command line (Spark does not have to be installed on client)
+launch PredictCrateData remotely with a remote crate instance using curl on command line (Spark does not have to be installed on client)
 with a jar located on a http server
+
 ``` bash
 `curl -X POST http://192.168.43.143:6066/v1/submissions/create --header "Content-Type:application/json;charset=UTF-8" --data '{
    "action" : "CreateSubmissionRequest",
-   "appArgs" : [ "-u", "crate", "-c", "jdbc:crate://192.168.43.143:5432/?strict=true", "-m", "s3a://ACCESSKEYABCDEFGHIJKLMNOPQRS:SECRETKEYTUVWXYZ1234567890@my-personal-bucket/model"  ],
+   "appArgs" : [ ],
    "appResource" : "http://192.168.43.159:9000/spark-jobs-1.0.jar",
    "clientSparkVersion" : "2.2.0",
    "environmentVariables" : {
@@ -135,7 +135,8 @@ with a jar located on a http server
 ```
 
 launch PredictLocalUserInput locally with a local crate instance and a local local relative model path using IDE during development
-# bild von IDE einfügen
+
+![ide configuration](ide_predict_local_user_input_configuration.png)
 
 ### Use Case Queries
 
@@ -193,38 +194,6 @@ At the moment writing this document it is not possible to create a streaming app
 
 One possible way to get around this issue is to fetch only data which has no predictions already.
 This job needs to be executed at regular intervals then.
-
-#### Persisting a machine learning model in a cluster
-
-When it comes to persistence, Spark offers the opportunity to persist current progress in case of reuse at a later time.
-Unfortunately, Spark does not yet support to write progress back into a database.
-Although, there are some other options to persist data in Spark.
-
-##### Local
-
-This option is only recommended during development in standalone mode and should not be used when going in production environment.
-Local storage won't work for loading persisted data in the cluster, because Spark does not know how to reassemble distributed persisted data.
-
-example paths to save and load progress locally:
-
-* `relative/path/to/model`
-* `/absolute/path/to/model`
-
-##### Using hdfs protocol
-
-For production use, probably the best way to persist data is using a Hadoop Distributed File System on which Spark is usually set up on.
-
-example paths to save and load progress using hdfs protocol:
-
-* `hdfs://host_node:port/path/to/distributed/model`
-
-##### Using s3a protocol
-
-This is another option if no Hadoop Distributed File System is set up, or if the data shall be re-used on several clusters.
-
-example paths to save and load progress using hdfs protocol:
-
-* `s3a://access_key:secret_key@bucket-name/model` 
 
 #### The language guesses for short sentences are not always correct
 
@@ -453,5 +422,11 @@ This may take a really long time when defining too many different parameters.
 ### Prediction
 
 Machine learning is using data to answer questions.
-So Prediction, or inference, is the step where a model gets to answer questions. 
+So Prediction, or inference, is the step where a model gets to answer questions.
 This is the point of all this work, where the value of machine learning is realized.
+
+### Persisting progress of a cluster in CrateDB
+
+When it comes to persistence, Spark offers the opportunity to persist current progress in case of reuse at a later time.
+With a little workaround, also distributed Spark objects like machine learning models can be persisted in CrateDB using BLOB functionality.
+To see how it's done, please have a look at [CrateBlobRepository.java](src/main/java/crate/util/CrateBlobRepository.java)
