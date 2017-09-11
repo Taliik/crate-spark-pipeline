@@ -147,9 +147,9 @@ The following query creates a table to store predicted tweets:
 ``` sql
 create table predicted_tweets (
  id string primary key,
- created_at timestamp,
- text string,
- prediction string,
+ created_at timestamp not null,
+ text string not null,
+ prediction string not null,
  label string
 )
 ```
@@ -357,7 +357,7 @@ Fortunately, Spark offers a convenient way to map text-labels to numeric values 
 ###### String Indexer
 
 Produces a model which automatically maps every text to a identifiable index.
-The human readable texts are stored and can be reused for convert results.
+The human readable texts are stored and can be reused for re-converting results.
 
 ###### Index To String
 
@@ -376,9 +376,11 @@ These two articles give a good overview to get started:
 * [How to choose algorithms for Microsoft Azure Machine Learning](https://docs.microsoft.com/en-us/azure/machine-learning/machine-learning-algorithm-choice)
 * [Essentials of Machine Learning Algorithms](https://www.analyticsvidhya.com/blog/2015/08/common-machine-learning-algorithms/)
 
+If there are still doubts regarding a suiting machine learning algorithm, some experiments can be made.
+
 ---
 
-For [this projects problem](https://www.burakkanber.com/blog/machine-learning-naive-bayes-1/), Naive Bayes seems to be a good and well performing solution.
+After running some experiments, [the results](https://docs.google.com/spreadsheets/d/1IdbGhvVd2GMRGay1ujecE5SLtt76IbxE_kG-tArEG2Q/edit?usp=sharing) show that Naive Bayes seems to be a good and well performing solution for this use case.
 
 ### Pipelining
 
