@@ -17,10 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static crate.meta.AppMetadata.MODEL_NAME;
-import static crate.meta.AppMetadata.PREDICTION;
-import static crate.meta.AppMetadata.TEXT_FILTERED;
-import static crate.util.ArgumentParser.parse;
+import static crate.meta.AppMetadata.*;
 import static crate.util.CrateBlobRepository.load;
 
 /**
