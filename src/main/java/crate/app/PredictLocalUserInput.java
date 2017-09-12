@@ -1,6 +1,5 @@
 package crate.app;
 
-import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -18,9 +17,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static crate.meta.Metadata.MODEL_NAME;
-import static crate.meta.Metadata.PREDICTION;
-import static crate.meta.Metadata.TEXT_FILTERED;
+import static crate.meta.AppMetadata.MODEL_NAME;
+import static crate.meta.AppMetadata.PREDICTION;
+import static crate.meta.AppMetadata.TEXT_FILTERED;
 import static crate.util.ArgumentParser.parse;
 import static crate.util.CrateBlobRepository.load;
 

@@ -12,7 +12,7 @@ import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import static crate.meta.Metadata.*;
+import static crate.meta.AppMetadata.*;
 import static crate.util.ArgumentParser.parse;
 import static crate.util.CrateBlobRepository.load;
 import static crate.util.TwitterUtil.prepareTweets;

@@ -15,13 +15,14 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.Properties;
 
-import static crate.meta.Metadata.*;
+import static crate.meta.AppMetadata.*;
 
 /**
  * Allows serializable distributed Spark objects to be stored/fetched in/from CrateDB BLOB tables.
  *
- * IMPORTANT: When saving distributed Spark objects, make sure the object is broadcasted. See example below:
- * Broadcast<PipelineModel> modelBroadcast = session.sparkContext().broadcast(model, scala.reflect.ClassTag$.MODULE$.apply(PipelineModel.class));
+ * IMPORTANT: When saving distributed Spark objects, make sure the object is broadcasted.
+ * This way the object is fully available on every node. See example below:
+ * Broadcast<PipelineModel> modelBroadcast = SessionBroadcaster.broadcast(session, model);
  * save(properties, MODEL_NAME, modelBroadcast.getValue())
  */
 public final class CrateBlobRepository {
