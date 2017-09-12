@@ -56,10 +56,12 @@ After some research the language identification problem can be categorized as a 
 
 To get your hands dirty on a project like this you will need:
 
-* A CrateDB instance/cluster
-* An Apache Spark instance/cluster
+* A CrateDB instance/cluster (tested with version 2.1.6)
+* An Apache Spark instance/cluster (tested with version 2.2.0)
 * A dataset which you want to use e.g. twitter tweets
 * An idea what you want to accomplish with that dataset e.g. language identification of text
+* Java 8
+* Maven
 
 ### Use Case Setup
 
@@ -67,6 +69,12 @@ Please note that this project does not take care of everything needed for this u
 The following steps need to be performed manually:
 
 * [Creation of the table `predicted_tweets`](#create-predicted-data-table)
+* Creation of the spark-jobs.jar
+
+## How to build the jar
+
+The first step is to switch to the installation of the crate-spark-pipeline project.
+Now do the following:   ``mvn clean package``
 
 ### Use Case Apps
 
@@ -104,13 +112,14 @@ The model is loaded from a CrateDB BLOB table.
 
 #### Example usages
 
-launch LearnAndPredict locally with a local crate instance and a local relative model path using `spark-submit` on command line (Spark has to be installed)
+Launch LearnAndPredict locally with a local crate instance and a local relative model path using `spark-submit` on command line (Spark has to be installed).
+This command has to be executed in the local spark installation.
 
 ``` bash
 ./bin/spark-submit --class crate.app.LearnAndPredict --master "local[*]" file:///tmp/crate-spark-pipeline/target/spark-jobs-1.0.jar
 ```
 
-launch PredictCrateData remotely with a remote crate instance using curl on command line (Spark does not have to be installed on client)
+Launch PredictCrateData remotely with a remote crate instance using curl on command line (curl needs to be installed on the client, but Spark is not needed)
 with a jar located on a http server
 
 ``` bash
@@ -134,7 +143,7 @@ with a jar located on a http server
 }'`
 ```
 
-launch PredictLocalUserInput locally with a local crate instance and a local local relative model path using IDE during development
+Launch PredictLocalUserInput locally with a local crate instance and a local local relative model path using IDE during development
 
 ![ide configuration](ide_predict_local_user_input_configuration.png)
 
@@ -209,8 +218,8 @@ At the moment of writing this document, [JDBC](https://crate.io/docs/clients/jdb
 
 ### Gathering Data
 
-After use case definition and some research, it's time for the first real step in machine learning: gathering data.
-Depending on the use case data could either consist of sensor data produced by industry, social media data, stock prices or anonymised financial transactions.
+After the use case definition and some research, it's now time for the first real step in machine learning: gathering data.
+Depending on the use case, data could either consist of sensor data produced by industry, social media data, stock prices or anonymised financial transactions.
 
 For importing data, please refer to the [CrateDB documentation](https://crate.io/docs/crate/guide/index.html)
 
@@ -227,17 +236,17 @@ After authorization, CrateDB will import a few tweet messages into a table named
 
 ### Preparing Data
 
-Almost no dataset is already in a usable format for a custom situation.
+In the beginning almost no dataset is in a usable format for a custom situation.
 These datasets need some preparations beforehand.
 
-When it comes to preparations, it is essential to know the type of machine learning problem.
+When it comes to preparations, it is essential to identify the type of machine learning problem.
 There are mainly two groups of machine learning methods:
-For [supervised machine learning](https://en.wikipedia.org/wiki/Supervised_learning) the algorithm needs to know the correct answer of a given input.
-[Unsupervised machine learning](https://en.wikipedia.org/wiki/Unsupervised_learning) does not need to have the correct answer.
+Supervised and unsupervised machine learning. [Supervised ML](https://en.wikipedia.org/wiki/Supervised_learning) needs to know the correct answer of a given input,
+while [unsupervised ML](https://en.wikipedia.org/wiki/Unsupervised_learning) does not need to have the correct answer.
 
 Preparations depend on the state of the dataset:
 
-* Does the dataset contain the all the essential features or is some information missing?
+* Does the dataset contain all the essential features or is some information missing?
 * Is the data consistent or are there lots of errors and invalid data?
 
 ---
@@ -276,7 +285,7 @@ But when having a look at the current state, the data may not look as it should:
 +-----------------------------------------------------------------------------------------------------------+
 | #chibalotte                                                                                               |
 +-----------------------------------------------------------------------------------------------------------+
-| رفرف على #الحد_الجنوبي                                                                                         |
+| رفرف على #الحد_الجنوب                                                                                     |
 +-----------------------------------------------------------------------------------------------------------+
 | 😆😆😆                                                                                                     |
 +-----------------------------------------------------------------------------------------------------------+
@@ -287,11 +296,11 @@ These operations can be done by using transformations in Spark.
 
 #### Transformations
 
-A [transformation](https://spark.apache.org/docs/latest/ml-pipeline.html#main-concepts-in-pipelines) basically is the process of adding, editing, removing, combining parts of
+A [transformation](https://spark.apache.org/docs/latest/ml-pipeline.html#main-concepts-in-pipelines) is basically the process of adding, editing, removing, combining parts of
 one or more column(s) of a dataset and storing the outcome in a new column.
 Transformations are applied in their defined order on all rows of a dataset.
 
-Spark already provides a good amount of [transformer tools](http://spark.apache.org/docs/latest/ml-features.html) to manipulate data towards a machine learning usable format.
+Spark already provides a good amount of [transformer tools](http://spark.apache.org/docs/latest/ml-features.html) to manipulate data towards a format that is usable in machine learning.
 Spark also offers an [interface to implement a custom transformer](https://spark.apache.org/docs/latest/api/java/org/apache/spark/ml/UnaryTransformer.html) if none of the tools can do the job.
 
 ---
@@ -351,7 +360,7 @@ These texts need to be transformed into numbers, where the easiest way is the us
 
 ##### Label preparation
 
-Since Spark can apply machine learning only on numeric values, also the labels need to be numeric.
+Since Spark can only apply machine learning on numeric values, the labels need to be numeric.
 Fortunately, Spark offers a convenient way to map text-labels to numeric values and back.
 
 ###### String Indexer
@@ -367,7 +376,7 @@ A String Indexer Model provides these.
 
 ### Choosing a Model
 
-The next step in is choosing a model.
+The next step is choosing a model.
 There are many models that researchers and data scientists have created over the years.
 Some are very well suited for image data, others for sequences (like text, or music), some for numerical data, others for text-based data.
 
@@ -409,7 +418,7 @@ which fits best with the current configuration on the corresponding training dat
 
 ### Evaluation
 
-Once training is complete, it’s time to see if the model is any good, using Evaluation.
+Once the training is complete, it’s time to see if the model is any good, using Evaluation.
 Evaluation allows us to test our model against data that has never been used for training.
 This metric allows us to see how the model might perform against data that it has not yet seen.
 This is meant to be representative of how the model might perform in the real world.
