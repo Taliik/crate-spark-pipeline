@@ -71,10 +71,14 @@ The following steps need to be performed manually:
 * [Creation of the table `predicted_tweets`](#create-predicted-data-table)
 * Creation of the spark-jobs.jar
 
-## How to build the jar
+#### How to build the jar
 
 The first step is to switch to the installation of the crate-spark-pipeline project.
-Now do the following:   ``mvn clean package``
+Now do the following:   
+
+```
+mvn clean package
+```
 
 ### Use Case Apps
 
@@ -466,4 +470,4 @@ To predict any given dataset, the resulting models `transform` function applies 
 
 When it comes to persistence, Spark offers the opportunity to persist current progress in case of reuse at a later time.
 With a little workaround, also distributed Spark objects implementing java.io.Serializable like machine learning models can be persisted in CrateDB using BLOB functionality.
-To see how it's done, please have a look at [CrateBlobRepository.java](src/main/java/crate/util/CrateBlobRepository.java)
+To see how it's done, please have a look at [CrateBlobStorageUtil.java](src/main/java/crate/util/CrateBlobStorageUtil.java)
