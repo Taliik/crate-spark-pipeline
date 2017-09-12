@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import static crate.meta.AppMetadata.*;
-import static crate.util.CrateBlobRepository.load;
+import static crate.util.CrateBlobStorageUtil.load;
 import static crate.util.TwitterUtil.prepareTweets;
 
 /**
@@ -32,7 +32,7 @@ public class PredictCrateData {
                 .getOrCreate();
 
         // load model from CrateDB
-        Transformer model = (Transformer) load(properties, MODEL_NAME);
+        Transformer model = (Transformer) load(properties, TABLE_NAME, MODEL_NAME);
 
         // apply predictions
         predictCrateData(session, properties, model);

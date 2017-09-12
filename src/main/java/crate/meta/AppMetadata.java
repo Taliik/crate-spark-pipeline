@@ -48,7 +48,7 @@ public class AppMetadata {
 
         Properties properties = ArgumentParser.parse(args, parser, null);
         properties.setProperty(CRATE_JDBC_CONNECTION_URL, String.format("jdbc:crate://%s:%s/?strict=true", properties.getProperty(CRATE_HOST), properties.getProperty(CRATE_PSQL_PORT)));
-        properties.setProperty(CRATE_BLOB_CONNECTION_URL, String.format("http://%s:%s/_blobs/%s/", properties.getProperty(CRATE_HOST), properties.getProperty(CRATE_HTTP_PORT), TABLE_NAME));
+        properties.setProperty(CRATE_BLOB_CONNECTION_URL, String.format("http://%s:%s/_blobs", properties.getProperty(CRATE_HOST), properties.getProperty(CRATE_HTTP_PORT)));
 
         return properties;
     }

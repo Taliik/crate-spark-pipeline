@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Properties;
 
 import static crate.meta.AppMetadata.*;
-import static crate.util.CrateBlobRepository.load;
+import static crate.util.CrateBlobStorageUtil.load;
 
 /**
  * PredictLocalUserInput is an application which is launched at a local Spark instance. This is mainly for testing purposes. A model instance is loaded from a CrateDB BLOB table.
@@ -36,7 +36,7 @@ public class PredictLocalUserInput {
                 .getOrCreate();
 
         // load model from CrateDB
-        Transformer transformer = (Transformer) load(properties, MODEL_NAME);
+        Transformer transformer = (Transformer) load(properties, TABLE_NAME, MODEL_NAME);
 
         predictUserInput(session, properties, transformer);
 

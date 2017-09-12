@@ -19,8 +19,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import static crate.meta.AppMetadata.*;
-import static crate.util.CrateBlobRepository.save;
-import static crate.util.SessionBroadcaster.broadcast;
+import static crate.util.CrateBlobStorageUtil.save;
+import static crate.util.Broadcaster.broadcast;
 import static crate.util.TwitterUtil.prepareTweets;
 
 /**
@@ -42,7 +42,7 @@ public class LearnFromTwitter {
 
         // broadcast model so it's completely available on every node
         Broadcast<PipelineModel> modelBroadcast = broadcast(session, model);
-        save(properties, MODEL_NAME, modelBroadcast.getValue());
+        save(properties, TABLE_NAME, MODEL_NAME, modelBroadcast.getValue());
 
         session.stop();
     }
