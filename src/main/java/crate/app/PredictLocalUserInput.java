@@ -1,8 +1,6 @@
 package crate.app;
 
-import crate.util.ArgumentParser;
-import joptsimple.OptionParser;
-import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.Transformer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -14,21 +12,22 @@ import org.apache.spark.sql.types.StructType;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static crate.meta.Metadata.PREDICTION;
-import static crate.meta.Metadata.TEXT_FILTERED;
+import static crate.meta.AppMetadata.*;
+import static crate.util.CrateBlobStorageUtil.load;
 
+/**
+ * PredictLocalUserInput is an application which is launched at a local Spark instance. This is mainly for testing purposes. A model instance is loaded from a CrateDB BLOB table.
+ */
 public class PredictLocalUserInput {
 
-    public static void main(String[] args) throws IOException {
-
-        OptionParser parser = new OptionParser();
-        parser.acceptsAll(Arrays.asList("m", "model-path"), "path of machine learning model used for save/load").withRequiredArg().required();
-
-        Properties properties = ArgumentParser.parse(args, parser, null);
+    public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
+        // load properties
+        Properties properties = parse(args);
 
         // initialize spark session
         SparkSession session = SparkSession
@@ -36,14 +35,15 @@ public class PredictLocalUserInput {
                 .appName("Predict Local User Input For Testing Purposes")
                 .getOrCreate();
 
-        predictUserInput(session, properties);
+        // load model from CrateDB
+        Transformer transformer = (Transformer) load(properties, TABLE_NAME, MODEL_NAME);
+
+        predictUserInput(session, properties, transformer);
 
         session.stop();
     }
 
-    private static void predictUserInput(SparkSession session, Properties properties) throws IOException {
-        // load model
-        PipelineModel model = PipelineModel.load(properties.getProperty("model-path"));
+    private static void predictUserInput(SparkSession session, Properties properties, Transformer model) throws IOException {
 
         // predict user input data
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));

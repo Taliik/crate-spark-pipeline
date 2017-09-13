@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * Parses main arguments and feed them into a Properties-object.
+ */
 public class ArgumentParser {
 
     public static Properties parse(String[] args, OptionParser parser, String prefix) {

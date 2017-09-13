@@ -4,4 +4,4 @@
 /*.iml
 /target
 /spark-warehouse
-/model
+/dependency-reduced-pom.xml
