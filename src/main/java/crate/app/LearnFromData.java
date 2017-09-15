@@ -21,10 +21,10 @@ import java.util.Properties;
 import static crate.meta.AppMetadata.*;
 import static crate.util.CrateBlobStorageUtil.save;
 import static crate.util.Broadcaster.broadcast;
-import static crate.util.TextUtil.prepareData;
+import static crate.util.TwitterUtil.prepareData;
 
 /**
- * LearnFromData takes all currently imported Tweets from CrateDB and creates a machine learning model to predict languages of texts and stores the model in a CrateDB BLOB table.
+ * LearnFromData takes the currently imported Text from CrateDB and creates a machine learning model to predict languages of texts and stores the model in a CrateDB BLOB table.
  */
 public class LearnFromData {
 
@@ -35,10 +35,10 @@ public class LearnFromData {
         // initialize spark session
         SparkSession session = SparkSession
                 .builder()
-                .appName("Learn From Twitter")
+                .appName("Learn From Data")
                 .getOrCreate();
 
-        PipelineModel model = learnFromTwitter(session, properties);
+        PipelineModel model = learnFromData(session, properties);
 
         // broadcast model so it's completely available on every node
         Broadcast<PipelineModel> modelBroadcast = broadcast(session, model);
@@ -47,7 +47,7 @@ public class LearnFromData {
         session.stop();
     }
 
-    public static PipelineModel learnFromTwitter(SparkSession session, Properties properties) {
+    public static PipelineModel learnFromData(SparkSession session, Properties properties) {
         // fetch data from CrateDB using JDBC connection
         Dataset<Row> original = session
                 .read()

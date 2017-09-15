@@ -11,7 +11,7 @@ import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import static crate.app.LearnFromData.learnFromTwitter;
+import static crate.app.LearnFromData.learnFromData;
 import static crate.app.PredictCrateData.predictCrateData;
 import static crate.meta.AppMetadata.MODEL_NAME;
 import static crate.meta.AppMetadata.TABLE_NAME;
@@ -33,7 +33,7 @@ public class LearnAndPredict {
                 .appName("LearnAndPredictLanguage")
                 .getOrCreate();
 
-        PipelineModel model = learnFromTwitter(session, properties);
+        PipelineModel model = learnFromData(session, properties);
         predictCrateData(session, properties, model);
 
         // broadcast model so it's completely available on every node

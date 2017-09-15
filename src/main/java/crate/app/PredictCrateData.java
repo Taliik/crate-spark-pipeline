@@ -14,10 +14,10 @@ import java.util.Properties;
 
 import static crate.meta.AppMetadata.*;
 import static crate.util.CrateBlobStorageUtil.load;
-import static crate.util.TextUtil.prepareData;
+import static crate.util.TwitterUtil.prepareData;
 
 /**
- * PredictCrateData loads a language prediction model from a CrateDB BLOB table to predict all currently imported Tweets from CrateDB and stores the new data with predictions in a new `predicted_tweets` table.
+ * PredictCrateData loads a language prediction model from a CrateDB BLOB table to predict the currently imported Text from CrateDB and stores the new data with predictions in a new `predicted_tweets` table.
  */
 public class PredictCrateData {
 
