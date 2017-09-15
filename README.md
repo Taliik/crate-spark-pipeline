@@ -94,7 +94,7 @@ The optional parameters are:
 * ``--user <crate-user>`` or shorter ``-u <crate-user>`` used for authentication for JDBC (defaults to `crate`)
 * ``--driver <driver-class>`` or shorter ``-d <driver-class>`` used as JDBC driver class (defaults to "io.crate.client.jdbc.CrateDriver")
 
-#### LearnFromTwitter
+#### LearnFromData
 
 This app is able to create a language identification model based on Twitter data.
 The Twitter data is received from a table named `tweets` inside CrateDB by using a JDBC connection String and a user to interact with CrateDB.
@@ -107,7 +107,7 @@ PredictCrateData loads a language prediction model from a CrateDB BLOB table to 
 
 #### LearnAndPredict
 
-This class simply combines LearnFromTwitter and PredictCrateData.
+This class simply combines LearnFromData and PredictCrateData.
 
 #### PredictLocalUserInput
 
