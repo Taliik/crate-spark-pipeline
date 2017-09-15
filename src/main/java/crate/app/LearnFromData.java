@@ -21,12 +21,12 @@ import java.util.Properties;
 import static crate.meta.AppMetadata.*;
 import static crate.util.CrateBlobStorageUtil.save;
 import static crate.util.Broadcaster.broadcast;
-import static crate.util.TwitterUtil.prepareTweets;
+import static crate.util.TextUtil.prepareData;
 
 /**
- * LearnFromTwitter takes all currently imported Tweets from CrateDB and creates a machine learning model to predict languages of texts and stores the model in a CrateDB BLOB table.
+ * LearnFromData takes all currently imported Tweets from CrateDB and creates a machine learning model to predict languages of texts and stores the model in a CrateDB BLOB table.
  */
-public class LearnFromTwitter {
+public class LearnFromData {
 
     public static void main(String[] args) throws IOException, SQLException {
         // load properties
@@ -61,7 +61,7 @@ public class LearnFromTwitter {
         // preparations
         // ************
 
-        Dataset<Row> rawLabeled = prepareTweets(original, 30, true);
+        Dataset<Row> rawLabeled = prepareData(original, 30, true);
 
         // transform label to calculatable numbers
         StringIndexerModel labelIndexer = new StringIndexer()

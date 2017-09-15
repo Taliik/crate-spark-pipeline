@@ -14,7 +14,7 @@ import java.util.Properties;
 
 import static crate.meta.AppMetadata.*;
 import static crate.util.CrateBlobStorageUtil.load;
-import static crate.util.TwitterUtil.prepareTweets;
+import static crate.util.TextUtil.prepareData;
 
 /**
  * PredictCrateData loads a language prediction model from a CrateDB BLOB table to predict all currently imported Tweets from CrateDB and stores the new data with predictions in a new `predicted_tweets` table.
@@ -53,7 +53,7 @@ public class PredictCrateData {
         // ************
         // preparations
         // ************
-        Dataset<Row> prepared = prepareTweets(original, 30, true);
+        Dataset<Row> prepared = prepareData(original, 30, true);
 
         // predict crate data
         Dataset<Row> predicted = model.transform(prepared);
